@@ -1,0 +1,32 @@
+# Path to gcta input phenotype file. Must include the three wildcards: cohort, group, and phenotype 
+input: ""
+
+
+# Keys as cohort name, and values as dictionary
+cohorts:
+  MANOLIS:
+    bfile: "" # Paths to the cohort's plink bfiles
+    grm: "" # Path to the cohort's genetic relatedness matrix
+  Pomak:
+    bfile: ""
+    grm: ""
+    
+
+group: ""
+
+
+phenotypes: ""
+# Can be either a list of phenotype values or a path to text file with phenotype names as a single column
+# Example:
+# PanelA: ['ProteinA', 'ProteinB']
+# or
+# PanelA: '/path/to/list_of_PanelA_proteins.txt'
+# text file must be a single column file with no header and each row being the phenotype name
+
+
+
+QC_thresholds:
+  MAC: 10
+  HWE: 0.00001 # 1e-5
+  missingness: 0.01
+  p-value: 2.1174286727106297e-10
