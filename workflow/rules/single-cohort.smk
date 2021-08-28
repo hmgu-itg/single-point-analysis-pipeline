@@ -1,8 +1,11 @@
-configfile: "config.yaml"
-
+# configfile: "config.yaml"
+include: "read-config.smk"
+conda: "conda/environment.yaml"
+# snakemake --profile slurm --use-conda --keep-going --show-failed-log --quiet --snakefile rules/single-cohort.smk --conda-frontend conda
 
 rule all:
-    expand("output/gcta/{cohort}/{cohort}.{group}.{phenotype}", cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'])
+    input:
+        expand("output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz", cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'])
 
 rule gcta:
     input:
@@ -16,7 +19,7 @@ rule gcta:
     output:
         mlma_bgz="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
         mlma_bgz_tbi="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz.tbi"
-    threads: 10
+    threads: 20
     log: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.log"
     shell:
         """

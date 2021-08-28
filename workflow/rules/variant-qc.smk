@@ -1,9 +1,8 @@
-# configfile: "config.yaml"
 include: "read-config.smk"
 
 rule all:
     input:
-        expand("output/bfile/{cohort}.bed", cohort=config['cohorts'])
+        expand("output/bfile/{cohort}.bed", cohort=config['cohorts']),
         'output/bfile/all.mac.txt'
 
 
@@ -72,6 +71,7 @@ rule filter_bfile:
         out="output/bfile/{cohort}"
     output: multiext("output/bfile/{cohort}", '.bed', '.bim', '.fam')
     threads: 10
+    conda: "conda/environment.yaml"
     shell:
         """
         plink \

@@ -1,0 +1,14 @@
+name: variant-qc
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - libgcc-ng=11.1.0=hc902ee8_8
+  - libgomp=11.1.0=hc902ee8_8
+  - moreutils=0.65=h7f98852_1
+  - perl=5.32.1=0_h7f98852_perl5
+  - plink=1.90b6.21=h779adbc_1
+prefix: /home/itg/young-chan.park/miniconda3/envs/variant-qc
