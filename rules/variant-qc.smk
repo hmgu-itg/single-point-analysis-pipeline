@@ -1,11 +1,17 @@
 # configfile: "config.yaml"
 include: "read-config.smk"
 
+rule all:
+    input:
+        expand("output/bfile/{cohort}.bed", cohort=config['cohorts'])
+        'output/bfile/all.mac.txt'
+
+
 rule hwe:
     input: lambda w: multiext(config['cohorts'][w.cohort]['bfile'], '.bed', '.bim', '.fam')
     params:
         input=lambda w: config['cohorts'][w.cohort]['bfile'],
-        output="output/bfile/{cohort}"
+        output="output/bfile/hwe/{cohort}"
     output: multiext("output/bfile/hwe/{cohort}", '.hwe', '.log', '.nosex')
     shell:
         """
@@ -28,7 +34,7 @@ rule missingness:
     input: lambda w: multiext(config['cohorts'][w.cohort]['bfile'], '.bed', '.bim', '.fam')
     params:
         input=lambda w: config['cohorts'][w.cohort]['bfile'],
-        output="output/bfile/{cohort}"
+        output="output/bfile/missingness/{cohort}"
     output: multiext("output/bfile/missingness/{cohort}", '.lmiss', '.imiss')
     shell:
         """
@@ -65,13 +71,16 @@ rule filter_bfile:
         bfile=lambda w: config['cohorts'][w.cohort]['bfile'],
         out="output/bfile/{cohort}"
     output: multiext("output/bfile/{cohort}", '.bed', '.bim', '.fam')
+    threads: 10
     shell:
         """
         plink \
           --bfile {params.bfile} \
           --exclude {input.exclude_list} \
           --make-bed \
-          --out {params.out}
+          --out {params.out} \
+          --threads {threads}
+        awk -F$'\\t' 'BEGIN{{OFS=\"\\t\"}}{{print $1,\"chr\"$1\":\"$4,$3,$4,$5,$6}}' {params.out}.bim | sponge {params.out}.bim
         """
 
 
