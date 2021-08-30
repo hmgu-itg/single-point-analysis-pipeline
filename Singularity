@@ -3,7 +3,6 @@ From: ubuntu:20.04
 
 %environment
     export TZ=Europe/Berlin
-    export PATH=/usr/local/bin:$PATH
     
     export LC_ALL=C.UTF-8
     export LANG=C.UTF-8
