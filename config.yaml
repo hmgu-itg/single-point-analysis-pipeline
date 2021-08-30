@@ -4,10 +4,10 @@ input: ""
 
 # Keys as cohort name, and values as dictionary
 cohorts:
-  MANOLIS:
+  cohortA:
     bfile: "" # Paths to the cohort's plink bfiles
     grm: "" # Path to the cohort's genetic relatedness matrix
-  Pomak:
+  cohort:
     bfile: ""
     grm: ""
     
@@ -23,7 +23,11 @@ phenotypes: ""
 # PanelA: '/path/to/list_of_PanelA_proteins.txt'
 # text file must be a single column file with no header and each row being the phenotype name
 
+manqq:
+  maf_filter: 0.001
 
+peakplotter:
+  span: 1000000
 
 QC_thresholds:
   MAC: 10
