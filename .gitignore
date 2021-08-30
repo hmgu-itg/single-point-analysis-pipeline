@@ -1,5 +1,3 @@
 output/*
 
 .snakemake
-
-slurm-*.out
