@@ -110,7 +110,7 @@ fi
 echo -e "\n\n"
 echo Done running Cojo
 
-rm \
+rm -f \
   $prefix.bed \
   $prefix.bim \
   $prefix.fam \
