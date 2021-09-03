@@ -3,3 +3,4 @@ output/*
 .snakemake
 
 slurm-*.out
+logs/*
