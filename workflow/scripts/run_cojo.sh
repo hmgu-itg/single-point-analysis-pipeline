@@ -116,6 +116,7 @@ rm \
   $prefix.fam \
   $prefix.nosex \
   $prefix.log \
+  $prefix.qassoc \
   $prefix.clumped \
   $prefix.clumped.list \
   $prefix.excludelist \

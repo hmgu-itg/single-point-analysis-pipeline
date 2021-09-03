@@ -55,8 +55,7 @@ rule run_cojo:
         multiext("output/meta-analysis/cojo/{group}.{phenotype}/{group}.{phenotype}.{chrom}.{start}.{end}", 
             ".jma.cojo",
             ".cma.cojo",
-            ".ldr.cojo",
-            ".qassoc")
+            ".ldr.cojo")
     log:
         "output/meta-analysis/cojo/{group}.{phenotype}/{group}.{phenotype}.{chrom}.{start}.{end}.snakemake.log"
     shell:
