@@ -47,6 +47,7 @@ plink --allow-no-sex --make-bed \
     --to-bp $end \
     --out $prefix
 
+echo -e "\n\n"
 
 ## CLUMP from merged file 
 plink \
@@ -59,28 +60,12 @@ plink \
 clumpedlist=$prefix.clumped.list
 awk '$5<5e-8 && $1~/^[0-9]+$/{print $3}' $prefix.clumped > $clumpedlist
 
-##
+
+filtered_cojofile=$prefix.cojofile
+zcat $cojofile | sed 's/:/ /' | awk -v chrom="chr$chrom" -v start="$start" -v end="$end" '{if ($1==chrom && start<=$2 && $2<=end) {print}}' | sed 's/ /:/' > $filtered_cojofile
+
 excludelist=$prefix.excludelist
-export RUN_COJO_BIM_VARIABLE="$prefix.bim"
-export RUN_COJO_COJOFILE_VARIABLE="$cojofile"
-export RUN_COJO_OUTPUTFILE_VARIABLE="$excludelist"
-python3 -c "
-import os
-import pandas as pd
-bim = os.environ['RUN_COJO_BIM_VARIABLE']
-cojofile = os.environ['RUN_COJO_COJOFILE_VARIABLE']
-outputfile = os.environ['RUN_COJO_OUTPUTFILE_VARIABLE']
-bim_d = pd.read_csv(bim, sep = '\t', header = None, names = ['chrom', 'SNP', '_', 'pos', 'alt', 'ref'])
-cojofile_d = pd.read_csv(cojofile, sep = ' ', header = 0)
-cojofile_d = pd.merge(cojofile_d, bim_d, on = 'SNP', how = 'inner')
-to_exclude = cojofile_d.loc[cojofile_d['A1']!=cojofile_d['alt'], ['SNP', 'A1', 'A2']]
-to_exclude.to_csv(outputfile, sep = ' ', header = False, index = False)
-"
-
-
-
-filtered_cojofile=$prefix.cojofile # Is this needed??
-zcat $cojofile | grep chr$chrom > $filtered_cojofile # Is this needed??
+comm -13 <(cut -f2 $prefix.bim | sort) <(cut -d' ' -f 1 $filtered_cojofile | sort) > $excludelist
 
 if [[ $(wc -l < "$excludelist") -ge 1 ]] ; then
   echo "[WARNING] Variants not present in .bim file but present in cojofile detected"
@@ -89,11 +74,7 @@ if [[ $(wc -l < "$excludelist") -ge 1 ]] ; then
 fi
 
 
-if [ -f "$missnp_file" ] ; then
-  echo "[WARNING] excluding multiallelic variants within region in $missnp_file"
-  echo "[WARNING] from $filtered_cojofile"
-  grep -vw -f $missnp_file $filtered_cojofile | sponge $filtered_cojofile
-fi
+echo -e "\n\n"
 
 gcta64 \
   --bfile $prefix \
@@ -106,21 +87,39 @@ gcta64 \
 bad_freq=$prefix.freq.badsnps
 if [[ -f "$bad_freq" ]] ; then
   updated_alleles=$prefix.update_alleles
-  merged_flipped=$prefix.merged.flipped
+  flipped=$prefix.merged.flipped
   tail -n+2 $bad_freq | awk -F$'\t' '{print $1,$2,$3,$3,$2}' > $updated_alleles
+
+  echo -e "\n\n"
   plink \
-    --bfile $merged \
+    --bfile $prefix \
     --update-alleles $updated_alleles \
-    --out $merged_flipped \
+    --out $flipped \
     --make-bed
 
+  echo -e "\n\n"
   gcta64 \
-    --bfile $merged_flipped \
+    --bfile $flipped \
     --cojo-file $filtered_cojofile \
     --extract $clumpedlist \
     --out $prefix \
     --cojo-slct \
     --cojo-collinear 0.9
-
 fi
+
+echo -e "\n\n"
 echo Done running Cojo
+
+rm \
+  $prefix.bed \
+  $prefix.bim \
+  $prefix.fam \
+  $prefix.nosex \
+  $prefix.log \
+  $prefix.clumped \
+  $prefix.clumped.list \
+  $prefix.excludelist \
+  $prefix.update_alleles \
+  $prefix.freq.badsnps \
+  $prefix.merged.* \
+  $prefix.cojofile
