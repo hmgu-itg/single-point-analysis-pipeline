@@ -1,9 +1,9 @@
 # configfile: "config.yaml"
 include: "read-config.smk"
-conda: "conda/environment.yaml"
+# conda: "conda/environment.yaml"
 # snakemake --profile slurm --use-conda --keep-going --show-failed-log --quiet --snakefile rules/single-cohort.smk --conda-frontend conda
 
-rule all:
+rule all2:
     input:
         expand("output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz", cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'])
 
@@ -20,16 +20,28 @@ rule gcta:
         mlma_bgz="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
         mlma_bgz_tbi="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz.tbi"
     threads: 20
+    resources:
+        cpus_per_task=20,
+        mem_per_cpu="10G"
     log: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.log"
     shell:
         """
-        scripts/run_gcta.sh \
-            {input.phenotype} \
-            {params.outprefix} \
-            {params.bfile} \
-            {params.grm} \
-            {threads} 2>&1 > {log}
-        rm {params.outprefix}.log
+        pheno_file={params.outprefix}.pheno
+        mlma={params.outprefix}.mlma
+        mlma_bgz={params.outprefix}.mlma.gz
+
+        awk '{{OFS=\"\\t\"}}NR!=1{{print $1,$1,$3}}' {input.phenotype} > $pheno_file 2> {log}
+
+        gcta64 --mlma \
+                --bfile {params.bfile} \
+                --grm {params.grm} \
+                --pheno $pheno_file \
+                --out {params.outprefix} \
+                --threads {threads} 2>&1 >> {log}
+        bgzip -c $mlma > $mlma_bgz 2>> {log}
+        tabix --skip-lines 1 --sequence 1 --begin 3 --end 3 $mlma_bgz 2>&1 >> {log}
+
+        rm $pheno_file $mlma {params.outprefix}.log 2>&1 >> {log}
         """
 
 
