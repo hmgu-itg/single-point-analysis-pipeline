@@ -1,11 +1,15 @@
+"""
+Snakefile 2.
+
+
+"""
 include: "read-config.smk"
 container: config['container']
 
 rule all3:
     input:
-        expand("output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz", \
-               cohort = config['cohorts'], group = config['group'], phenotype = config['phenotypes'])
-
+        expand("output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz", group = config['group'], phenotype = config['phenotypes']),
+        "output/bfile/combined.frq2"
 
 rule run_metal:
     input:
@@ -26,13 +30,13 @@ rule run_metal:
         metal_cmd={params.out_prefix}.metal.cmd
         metal --version | head -2 > {params.out_prefix}.metal.ver
 
-        # WARNING: Notice that the order of allele is A2 then A1?
-        # This is because A2 is the reference allele and A1 is the effect allele in
-        # GCTA output files.
+        # Note: A1 is the effect allele and A2 is the other allele
+        # in GCTA output files, and METAL documentation suggest putting
+        # the effect allele first.
         ## RUN METAL
         echo 'SEPARATOR TAB'  > $metal_cmd
         echo 'MARKER SNP'     >> $metal_cmd
-        echo 'ALLELE A2 A1'   >> $metal_cmd
+        echo 'ALLELE A1 A2'   >> $metal_cmd
         echo 'FREQLABEL Freq' >> $metal_cmd
         echo 'EFFECT b'       >> $metal_cmd
         echo 'STDERR se'      >> $metal_cmd
@@ -174,40 +178,6 @@ rule filter_metal:
         zgrep -v -w -f <(cat {input.missnp} {input.excludelist}) {input.metal} | grep -v na | bgzip > {output.gz}
         tabix -s1 -b3 -e3 -S1 {output.gz}
         """
-
-
-rule collect_peaks:
-    input:
-        "output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz"
-    params:
-        span=config['peakplotter']['span'],
-        signif=5e-8,
-        group="{group}",
-        phenotype="{phenotype}"
-    output:
-        "output/meta-analysis/peaks/peaklist/{group}.{phenotype}.peaklist"
-    singularity: "library://hmgu-itg/default/peakplotter"
-    shell:
-        "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {params.group} {params.phenotype} {output}"
-        
-
-rule collect_all_peaks:
-    input:
-        expand("output/meta-analysis/peaks/peaklist/{group}.{phenotype}.peaklist", 
-                phenotype = config['phenotypes'], allow_missing=True)
-    output:
-        "output/meta-analysis/peaks/peaklist/all.{group}.peaklist"
-    run:
-        all_df = list()
-        for f in input:
-            try:
-                df = pd.read_csv(f, sep = '\t', header = None)
-            except pd.errors.EmptyDataError:
-                continue
-            all_df.append(df)
-        all_df = pd.concat(all_df)
-        all_df.sort_values([0, 1, 2, 3, 4], inplace = True)
-        all_df.to_csv(output[0], sep = '\t', header = False, index = False)
 
 
 rule manqq_metal:

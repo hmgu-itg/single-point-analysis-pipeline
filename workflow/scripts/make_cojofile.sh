@@ -27,7 +27,7 @@ join \
   -j 1 \
   -o 0 1.2 1.3 1.4 1.5 1.6 1.7 2.2 \
   <(zcat $metal_file \
-      | awk '{if(NR!=1){print "chr"$1":"$3, $5, $4, $6, $10, $11, $12}}' \
+      | awk '{if(NR!=1){print "chr"$1":"$3, $4, $5, $6, $10, $11, $12}}' \
       | sort -k 1b,1 \
    ) \
   <(sort -k 1b,1 $samplesize) >&3

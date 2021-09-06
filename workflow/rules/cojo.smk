@@ -1,4 +1,16 @@
+"""
+Snakefile 5. Run COJO
+
+Example
+-------
+# To run cojo on all detected peaks
+$ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/cojo.smk
+
+"""
+import re
+
 import pandas as pd
+
 include: "read-config.smk"
 container: config['container']
 
@@ -10,7 +22,21 @@ peaks = [f'{row.group}.{row.phenotype}/{row.group}.{row.phenotype}.{row.chrom}.{
 rule all_cojo:
     input:
         expand("output/meta-analysis/cojo/{peak}.jma.cojo", peak=peaks)
-
+    output:
+        "output/meta-analysis/cojo/all.jma.cojo.csv.gz"
+    run:
+        concat_list = list()
+        for f in input:
+            string = re.sub(r'.*\/cojo\/', '', f)
+            string = re.sub(r'\/.*', '', string)
+            group, phenotype = string.split('.')
+            peak = f.split('/')[-1].replace(f'{string}.', '').replace('jma.cojo', '')
+            df = pd.read_csv(f, sep = '\t', header = 0)
+            df.insert(0, 'peak', peak)
+            df.insert(0, 'phenotype', phenotype)
+            df.insert(0, 'group', group)
+            concat_list.append(df)
+        pd.concat(concat_list).to_csv(output[0], index = False, header = True, compression = 'gzip')
 
 
 rule make_cojofile:
