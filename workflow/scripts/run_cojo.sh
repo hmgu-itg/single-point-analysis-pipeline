@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-run_cojo=v0.0.1
+run_cojo=v0.0.2
 bfile=$1
 cojofile=$2
 metal_file=$3
@@ -29,8 +29,10 @@ qassoc=$prefix.qassoc
 echo "Creating $qassoc"
 tabix $metal_file ${chrom}:${start}-${end} | \
     awk 'BEGIN{OFS="\t";print "CHR\tSNP\tBP\tBETA\tSE\tR2\tT\tP"} \
-      {if($12<1e-6){ \
-          print $1, "chr"$1":"$3, $3, $10, $11, 1, 1, $12} \
+      {
+        split($12, a, "[eE]") 
+        if($12<1e-6 || (length(a)>1 && a[2] < -6)){ 
+          print $1, "chr"$1":"$3, $3, $10, $11, 1, 1, $12}
       }' > $qassoc
       
       
