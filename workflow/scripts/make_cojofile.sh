@@ -21,6 +21,7 @@ awk -F '[[:space:]]+' '{if(NR!=1){print $3, $5-$4}}' $prefix.lmiss > $samplesize
 
 
 tmpfile=$(mktemp /tmp/make_cojofile.XXXXXX) # https://unix.stackexchange.com/a/181938
+echo "[INFO] Creating temporary file: $tmpfile"
 exec 3>"$tmpfile"
 
 join \
@@ -44,5 +45,5 @@ cat \
   | gzip > $prefix.miss500.ma.gz
 
 exec 3>-
-rm $tmpfile
-rm $prefix.{lmiss,imiss,nosex,log,samplesize}
+# rm $tmpfile
+# rm $prefix.{lmiss,imiss,nosex,log,samplesize}

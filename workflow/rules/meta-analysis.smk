@@ -6,6 +6,9 @@ Snakefile 2.
 include: "read-config.smk"
 container: config['container']
 
+
+# TODO: How should we deal with variants that's only in one cohort?
+
 rule all3:
     input:
         expand("output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz", group = config['group'], phenotype = config['phenotypes']),

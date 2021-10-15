@@ -30,8 +30,11 @@ rule all_cojo:
             string = re.sub(r'.*\/cojo\/', '', f)
             string = re.sub(r'\/.*', '', string)
             group, phenotype = string.split('.')
-            peak = f.split('/')[-1].replace(f'{string}.', '').replace('jma.cojo', '')
+            peak = f.split('/')[-1].replace(f'{string}.', '').replace('.jma.cojo', '')
             df = pd.read_csv(f, sep = '\t', header = 0)
+            min_p = df['p'].min()
+            df['is cojo tophit'] = False
+            df.loc[df['p'] == min_p, 'is cojo tophit'] = True
             df.insert(0, 'peak', peak)
             df.insert(0, 'phenotype', phenotype)
             df.insert(0, 'group', group)

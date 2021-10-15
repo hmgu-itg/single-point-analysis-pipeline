@@ -1,7 +1,9 @@
-# configfile: "config.yaml"
+"""
+Snakefile 1.
+
+
+"""
 include: "read-config.smk"
-# conda: "conda/environment.yaml"
-# snakemake --profile slurm --use-conda --keep-going --show-failed-log --quiet --snakefile rules/single-cohort.smk --conda-frontend conda
 
 rule all2:
     input:
@@ -42,36 +44,4 @@ rule gcta:
         tabix --skip-lines 1 --sequence 1 --begin 3 --end 3 $mlma_bgz 2>&1 >> {log}
 
         rm $pheno_file $mlma {params.outprefix}.log 2>&1 >> {log}
-        """
-
-
-rule peak_gcta:
-    input:
-        mlma="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
-        bfile=multiext("output/bfile/{cohort}", '.bed', '.bim', '.fam')
-    singularity: "library://hmgu-itg/default/peakplotter"
-    params:
-        bfile="output/bfile/{cohort}"
-    resources:
-        rate_limit=1
-    output: 
-        directory=directory("output/single-cohort/peaks/{cohort}/{cohort}.{panel}.{protein}"),
-        done="output/single-cohort/peaks/{cohort}/{cohort}.{panel}.{protein}/done"
-    log: "output/single-cohort/peaks/{cohort}/{cohort}.{panel}.{protein}"
-    shell:
-        """
-        peakplotter  \
-          --bfiles {params.bfile} \
-          --chr-col Chr \
-          --pos-col bp \
-          --rs-col SNP \
-          --pval-col p \
-          --a1-col A1 \
-          --a2-col A2 \
-          --maf-col Freq \
-          --build 38 \
-          --overwrite \
-          --assoc-file {input.mlma} \
-          --out {output.directory} 2>&1 > {log}
-        touch {output.done}
         """
