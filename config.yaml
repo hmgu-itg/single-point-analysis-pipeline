@@ -1,3 +1,5 @@
+container: https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif
+
 # Path to gcta input phenotype file. Must include the three wildcards: cohort, group, and phenotype 
 input: ""
 
@@ -23,10 +25,14 @@ phenotypes: ""
 # PanelA: '/path/to/list_of_PanelA_proteins.txt'
 # text file must be a single column file with no header and each row being the phenotype name
 
+manqq:
+  maf_filter: 0.001
 
+peakplotter:
+  span: 1000000
 
 QC_thresholds:
   MAC: 10
   HWE: 0.00001 # 1e-5
   missingness: 0.01
-  p-value: 2.1174286727106297e-10
+  p-value: 5e-8
