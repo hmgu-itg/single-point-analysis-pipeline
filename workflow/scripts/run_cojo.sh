@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-run_cojo=v0.0.2
+run_cojo=v0.0.3
 bfile=$1
 cojofile=$2
 metal_file=$3
-group=$4
-phenotype=$5
-chrom=$6
-start=$7
-end=$8
-prefix=$9 # output prefix
+threshold=$4 # p-value threshold
+group=$5
+phenotype=$6
+chrom=$7
+start=$8
+end=$9
+prefix=${10} # output prefix
 
 
 echo "=== Running run_cojo.sh ===
@@ -19,6 +20,7 @@ bfile: $bfile
 chrom: $chrom
 start: $start
 end: $end
+threshold: $threshold
 cojofile: $cojofile
 metal_file: $metal_file
 prefix: $prefix
@@ -60,7 +62,7 @@ plink \
   --out $prefix
 
 clumpedlist=$prefix.clumped.list
-awk '$5<5e-8 && $1~/^[0-9]+$/{print $3}' $prefix.clumped > $clumpedlist
+awk -v threshold=$threshold '{if($5<threshold && $1~/^[0-9]+$/){print $3}}' $prefix.clumped > $clumpedlist
 
 
 filtered_cojofile=$prefix.cojofile
@@ -84,6 +86,7 @@ gcta64 \
   --extract $clumpedlist \
   --out $prefix \
   --cojo-slct \
+  --cojo-p $threshold \
   --cojo-collinear 0.9 || true
 
 bad_freq=$prefix.freq.badsnps
@@ -106,6 +109,7 @@ if [[ -f "$bad_freq" ]] ; then
     --extract $clumpedlist \
     --out $prefix \
     --cojo-slct \
+    --cojo-p $threshold \
     --cojo-collinear 0.9
 fi
 

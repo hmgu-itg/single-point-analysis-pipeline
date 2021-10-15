@@ -76,6 +76,7 @@ rule run_cojo:
         group="{group}",
         phenotype="{phenotype}",
         bfile="output/meta-analysis/temp-bfiles/{group}.{phenotype}",
+        threshold=config['QC_thresholds']['p-value'],
         chrom="{chrom}",
         start="{start}",
         end="{end}",
@@ -93,6 +94,7 @@ rule run_cojo:
             {params.bfile} \
             {input.cojofile} \
             {input.metal} \
+            {params.threshold} \
             {params.group} \
             {params.phenotype} \
             {params.chrom} \
