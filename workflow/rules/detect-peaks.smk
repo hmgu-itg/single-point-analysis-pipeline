@@ -43,6 +43,6 @@ rule detect_peaks:
         phenotype="{phenotype}"
     output:
         "output/meta-analysis/peaks/peaklist/{group}.{phenotype}.peaklist"
-    singularity: "library://hmgu-itg/default/peakplotter"
+    singularity: "library://hmgu-itg/default/peakplotter:0.4.3"
     shell:
         "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {params.group} {params.phenotype} {output}"
