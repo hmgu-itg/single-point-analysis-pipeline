@@ -1,6 +1,7 @@
 import pandas as pd
 
 include: "read-config.smk"
+container: config['container']
 
 rule all1:
     input:

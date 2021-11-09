@@ -38,7 +38,7 @@ rule detect_peaks:
         "output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz"
     params:
         span=config['peakplotter']['span'],
-        signif=5e-8,
+        signif=config['QC_thresholds']['p-value'],
         group="{group}",
         phenotype="{phenotype}"
     output:
