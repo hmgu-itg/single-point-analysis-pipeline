@@ -68,6 +68,9 @@ rule collect_exclude_list:
 
 
 rule filter_bfile:
+    """
+    Single-cohort bfiles are filtered on HWE and Missingness.
+    """
     input: 
         bfile=lambda w: multiext(config['cohorts'][w.cohort]['bfile'], '.bed', '.bim', '.fam'),
         exclude_list="output/bfile/{cohort}.exclude.all.txt"
@@ -109,6 +112,10 @@ rule mac_group:
     shell: "cat {input} > {output}"
     
 rule mac_all:
+    """
+    Prepares a file which contains all MAC==(int specified in config.yaml)
+    equivalent of a MAF threshold for all phenotypes and saves it to an output
+    """
     input: "output/bfile/mac/all.cohort.mac.txt"
     params: threshold=config['QC_thresholds']['MAC']
     output: "output/bfile/mac/all.mac.txt"

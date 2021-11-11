@@ -123,7 +123,7 @@ rule combined_freq:
         multiext("output/bfile/combined", '.bed', '.bim', '.fam')
     params:
         bfile="output/bfile/combined",
-        awk="{if (NR!=1){print $3,$6}}"
+        awk="{if (NR!=1){print $3,$6}}" # Variant ID and MAF column
     output:
         frq="output/bfile/combined.frq",
         frq2="output/bfile/combined.frq2"
@@ -142,6 +142,14 @@ rule combined_freq:
         """
 
 rule phenotype_mac_filter:
+    """
+    `output/bfile/mac/all.mac.txt` file is created in the `variant-qc.smk` snakefile.
+    
+    MAC==10 equivalent of MAF is calculated by now, and this is the filtering rule. 
+    1. The MAC==10 equivalent MAF for the phenotype is extracted from the `all.mac.txt` file
+    2. Then a `{params.out}.mac.excludelist` file is created which contains all variant IDs with 10 or less MAC
+    3. The excludelist file is then used as input to plink to remove those variants from the bfile.
+    """
     input:
         mac="output/bfile/mac/all.mac.txt",
         bfiles=multiext("output/bfile/combined", '.bed', '.bim', '.fam', '.frq2')
