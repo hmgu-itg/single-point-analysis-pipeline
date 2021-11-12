@@ -9,7 +9,7 @@ Example
 $ snakemake --cores 10 --restart-times 3 --keep-going --use-singularity --snakefile workflow/rules/peakplot.smk 
 
 # To run a single peakplotter run
-$ snakemake --cores 1 --restart-times 3 --keep-going --use-singularity --snakefile workflow/rules/peakplot.smk output/meta-analysis/peaks/{group}.{phenotype}/{chrom}.{start}.{end}.500kb
+$ snakemake --cores 1 --restart-times 3 --keep-going --use-singularity --snakefile workflow/rules/peakplot.smk output/meta-analysis/peaks/{group}.{phenotype}/{chrom}.{start}.{end}.500kb.csv
 """
 from pathlib import Path
 
@@ -83,7 +83,7 @@ rule peak_metal:
         chrom="{chrom}",
         start="{start}",
         end="{end}"
-    singularity: "library://hmgu-itg/default/peakplotter:dev"
+    singularity: "library://hmgu-itg/default/peakplotter:0.4.3"
     output:
         "output/meta-analysis/peaks/{group}.{phenotype}/{group}.{phenotype}.{chrom}.{start}.{end}.log",
         multiext("output/meta-analysis/peaks/{group}.{phenotype}/{chrom}.{start}.{end}.500kb", '.html', '.csv')
