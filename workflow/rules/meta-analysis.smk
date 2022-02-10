@@ -9,9 +9,9 @@ container: config['container']
 
 # TODO: How should we deal with variants that's only in one cohort?
 
-rule all3:
+rule create_all_metal:
     input:
-        expand("output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz", group = config['group'], phenotype = config['phenotypes']),
+        expand("output/meta-analysis/metal/{group}.{phenotype}.filtered.txt.gz", group = config['group'], phenotype = config['phenotypes']),
         "output/bfile/combined.frq2"
 
 rule metal:
