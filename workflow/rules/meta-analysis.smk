@@ -1,7 +1,7 @@
 """
 Snakefile 2.
 
-
+$ snakemake --cores 100 --snakefile workflow/rules/meta-analysis.smk --use-singularity --batch create_all_metal=1/10
 """
 include: "read-config.smk"
 container: config['container']
@@ -181,7 +181,7 @@ rule phenotype_mac_filter:
     threads: 20
     resources:
         cpus_per_task=20,
-        mem_per_cpu="5G"
+        mem="5G"
     shell:
         """
         mac_threshold=$(awk -F' ' -v id='{params.id}' '{{if ($1==id){{print $4}}}}' {input.mac})
