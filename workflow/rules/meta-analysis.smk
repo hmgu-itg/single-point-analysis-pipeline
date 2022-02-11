@@ -101,7 +101,7 @@ rule merge_bfiles:
     threads: 20
     resources:
         cpus_per_task=20,
-        mem_per_cpu="5G"
+        mem_mb=5000
     shell:
         """
         mergelist=$(mktemp /tmp/single-point-analysis-pipeline.merge_bfiles.XXXXXX)
@@ -202,9 +202,9 @@ rule phenotype_mac_filter:
 
 rule filter_metal:
     input:
-        metal=rules.metal.output.metal, # "output/meta-analysis/metal/{group}.{phenotype}.metal.gz",
-        missnp=rules.merge_bfiles.output.missnp, # "output/bfile/combined-merge.missnp",
-        excludelist=rules.phenotype_mac_filter.output.excludelist # "output/meta-analysis/temp-bfiles/{group}.{phenotype}.mac.excludelist"
+        metal=rules.metal.output.metal,
+        missnp=rules.merge_bfiles.output.missnp,
+        excludelist=rules.phenotype_mac_filter.output.excludelist
     output:
         gz="output/meta-analysis/metal/{group}.{phenotype}.filtered.txt.gz",
         tbi="output/meta-analysis/metal/{group}.{phenotype}.filtered.txt.gz.tbi"
