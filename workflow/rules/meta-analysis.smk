@@ -186,7 +186,8 @@ rule phenotype_mac_filter:
     threads: 20
     resources:
         cpus_per_task=20,
-        mem="5G"
+        mem_mb=5000,
+        time="2:0:0"
     shell:
         """
         mac_threshold=$(awk -F' ' -v id='{params.id}' '{{if ($1==id){{print $4}}}}' {input.mac})
