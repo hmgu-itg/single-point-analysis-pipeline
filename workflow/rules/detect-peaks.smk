@@ -4,22 +4,26 @@ Snakefile 3. Detect peaks
 
 Example
 -------
-$ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/detect-peaks.smk 
-$ snakemake --profile slurm --keep-going --use-singularity --singularity-args "-B /ictstr01" --snakefile workflow/rules/detect-peaks.smk
+$ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/detect-peaks.smk  detected_all_peaks
+$ snakemake --profile slurm --keep-going --use-singularity --snakefile workflow/rules/detect-peaks.smk detected_all_peaks
 """
 include: "read-config.smk"
+include: 'meta-analysis.smk'
 
-
-rule all_detect_peaks:
+rule detect_all_peaks:
     input:
         expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", group = config['group'])
 
-rule collect_all_detected_peaks:
+rule collate_all_peaks:
     input:
         expand("output/meta-analysis/peaks/peaklist/{group}.{phenotype}.peaklist", 
                 phenotype = config['phenotypes'], allow_missing=True)
     output:
         "output/meta-analysis/peaks/peaklist/all.{group}.peaklist"
+    resources:
+        mem_mb=500,
+        time="0:30:0",
+        cpus_per_task=1
     run:
         all_df = list()
         for f in input:
@@ -35,7 +39,8 @@ rule collect_all_detected_peaks:
 
 rule detect_peaks:
     input:
-        "output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz"
+        rules.filter_metal.output.gz
+        # "output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz"
     params:
         span=config['peakplotter']['span'],
         signif=config['QC_thresholds']['p-value'],
@@ -46,5 +51,9 @@ rule detect_peaks:
     log:
         "output/meta-analysis/peaks/peaklist/{group}.{phenotype}.log"
     singularity: "library://hmgu-itg/default/peakplotter:0.4.3"
+    resources:
+        mem_mb=500,
+        time="0:30:0",
+        cpus_per_task=1
     shell:
         "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {params.group} {params.phenotype} {output} 2>&1 > {log}"
