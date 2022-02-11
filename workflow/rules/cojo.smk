@@ -82,7 +82,7 @@ rule make_cojofile:
 rule cojo:
     input:
         bfiles=rules.phenotype_mac_filter.output.bfile,
-        cojofile=rules.make_cojofile.Output,
+        cojofile=rules.make_cojofile.output,
         metal=rules.filter_metal.output.gz
     params:
         group="{group}",
