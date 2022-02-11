@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-run_cojo=v0.0.3
+run_cojo=v0.1.0
 bfile=$1
 cojofile=$2
 metal_file=$3
@@ -26,9 +26,12 @@ metal_file: $metal_file
 prefix: $prefix
 ===========================
 "
+# TODO: Find a way to insert the $threshold variable
+# inside the below awk command.
 
+# See Plink 1.9's .qassoc file format for more details
 qassoc=$prefix.qassoc
-echo "Creating $qassoc"
+echo "[$(date), Step 1/4] Creating $qassoc"
 tabix $metal_file ${chrom}:${start}-${end} | \
     awk 'BEGIN{OFS="\t";print "CHR\tSNP\tBP\tBETA\tSE\tR2\tT\tP"} \
       {
@@ -39,11 +42,11 @@ tabix $metal_file ${chrom}:${start}-${end} | \
       
       
 echo
-echo Extracted $(( $(wc -l < $prefix.qassoc) - 1 )) SNPs.
+echo "Extracted $(( $(wc -l < $prefix.qassoc) - 1 )) SNP(s)."
 echo
 
 ## Subset bfile
-
+echo "[$(date), Step 2/4] Subset bfile"
 plink --allow-no-sex --make-bed \
     --bfile $bfile \
     --chr $chrom \
@@ -52,7 +55,7 @@ plink --allow-no-sex --make-bed \
     --out $prefix
 
 echo -e "\n\n"
-
+echo "[$(date), Step 3/4] Clumping"
 ## CLUMP from merged file 
 plink \
   --bfile $prefix \
@@ -65,68 +68,24 @@ clumpedlist=$prefix.clumped.list
 awk -v threshold=$threshold '{if($5<threshold && $1~/^[0-9]+$/){print $3}}' $prefix.clumped > $clumpedlist
 
 
-filtered_cojofile=$prefix.cojofile
-zcat $cojofile | sed 's/:/ /' | awk -v chrom="chr$chrom" -v start="$start" -v end="$end" '{if ($1==chrom && start<=$2 && $2<=end) {print}}' | sed 's/ /:/' > $filtered_cojofile
-
-excludelist=$prefix.excludelist
-comm -13 <(cut -f2 $prefix.bim | sort) <(cut -d' ' -f 1 $filtered_cojofile | sort) > $excludelist
-
-if [[ $(wc -l < "$excludelist") -ge 1 ]] ; then
-  echo "[WARNING] Variants not present in .bim file but present in cojofile detected"
-  echo "[WARNING] Excluding these variants. See list of excluded variants in $excludelist"
-  grep -vw -f $excludelist $filtered_cojofile | sponge $filtered_cojofile
-fi
-
 
 echo -e "\n\n"
-
+echo "[$(date), Step 4/4] GCTA-COJO"
 gcta64 \
   --bfile $prefix \
-  --cojo-file $filtered_cojofile \
+  --cojo-file <(zcat $cojofile) \
   --extract $clumpedlist \
   --out $prefix \
   --cojo-slct \
   --cojo-p $threshold \
+  --cojo-wind 10000 \
+  --diff-freq 0.2 \
   --cojo-collinear 0.9 || true
 
-bad_freq=$prefix.freq.badsnps
-if [[ -f "$bad_freq" ]] ; then
-  updated_alleles=$prefix.update_alleles
-  flipped=$prefix.merged.flipped
-  tail -n+2 $bad_freq | awk -F$'\t' '{print $1,$2,$3,$3,$2}' > $updated_alleles
-
-  echo -e "\n\n"
-  plink \
-    --bfile $prefix \
-    --update-alleles $updated_alleles \
-    --out $flipped \
-    --make-bed
-
-  echo -e "\n\n"
-  gcta64 \
-    --bfile $flipped \
-    --cojo-file $filtered_cojofile \
-    --extract $clumpedlist \
-    --out $prefix \
-    --cojo-slct \
-    --cojo-p $threshold \
-    --cojo-collinear 0.9
-fi
-
 echo -e "\n\n"
-echo Done running Cojo
+
+echo "[$(date)] Done"
 
 rm -f \
-  $prefix.bed \
-  $prefix.bim \
-  $prefix.fam \
   $prefix.nosex \
-  $prefix.log \
-  $prefix.qassoc \
-  $prefix.clumped \
-  $prefix.clumped.list \
-  $prefix.excludelist \
-  $prefix.update_alleles \
-  $prefix.freq.badsnps \
-  $prefix.merged.* \
-  $prefix.cojofile
+  $prefix.clumped.list
