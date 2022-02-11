@@ -54,4 +54,5 @@ cat \
 
 exec 3>-
 # rm $tmpfile
-# rm $prefix.{lmiss,imiss,nosex,log,samplesize}
+# rm $prefix.{lmiss,samplesize}
+rm $prefix.{imiss,nosex}
