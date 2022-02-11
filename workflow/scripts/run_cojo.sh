@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-run_cojo=v0.1.0
+run_cojo=v0.2.0
 bfile=$1
 cojofile=$2
 metal_file=$3
@@ -26,27 +26,8 @@ metal_file: $metal_file
 prefix: $prefix
 ===========================
 "
-# TODO: Find a way to insert the $threshold variable
-# inside the below awk command.
-
-# See Plink 1.9's .qassoc file format for more details
-qassoc=$prefix.qassoc
-echo "[$(date), Step 1/4] Creating $qassoc"
-tabix $metal_file ${chrom}:${start}-${end} | \
-    awk 'BEGIN{OFS="\t";print "CHR\tSNP\tBP\tBETA\tSE\tR2\tT\tP"} \
-      {
-        split($12, a, "[eE]") 
-        if($12<1e-6 || (length(a)>1 && a[2] < -6)){ 
-          print $1, "chr"$1":"$3, $3, $10, $11, 1, 1, $12}
-      }' > $qassoc
-      
-      
-echo
-echo "Extracted $(( $(wc -l < $prefix.qassoc) - 1 )) SNP(s)."
-echo
-
 ## Subset bfile
-echo "[$(date), Step 2/4] Subset bfile"
+echo "[$(date)] Subset bfile"
 plink --allow-no-sex --make-bed \
     --bfile $bfile \
     --chr $chrom \
@@ -55,26 +36,10 @@ plink --allow-no-sex --make-bed \
     --out $prefix
 
 echo -e "\n\n"
-echo "[$(date), Step 3/4] Clumping"
-## CLUMP from merged file 
-plink \
-  --bfile $prefix \
-  --clump $qassoc \
-  --clump-kb 1000 \
-  --clump-r2 0.05 \
-  --out $prefix
-
-clumpedlist=$prefix.clumped.list
-awk -v threshold=$threshold '{if($5<threshold && $1~/^[0-9]+$/){print $3}}' $prefix.clumped > $clumpedlist
-
-
-
-echo -e "\n\n"
-echo "[$(date), Step 4/4] GCTA-COJO"
+echo "[$(date)] GCTA-COJO"
 gcta64 \
   --bfile $prefix \
   --cojo-file <(zcat $cojofile) \
-  --extract $clumpedlist \
   --out $prefix \
   --cojo-slct \
   --cojo-p $threshold \
@@ -85,7 +50,3 @@ gcta64 \
 echo -e "\n\n"
 
 echo "[$(date)] Done"
-
-rm -f \
-  $prefix.nosex \
-  $prefix.clumped.list
