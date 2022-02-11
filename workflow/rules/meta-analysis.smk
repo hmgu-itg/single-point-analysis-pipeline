@@ -2,6 +2,7 @@
 Snakefile 2.
 
 $ snakemake --cores 100 --snakefile workflow/rules/meta-analysis.smk --use-singularity --batch create_all_metal=1/10
+$ snakemake --cores 100 --snakefile workflow/rules/meta-analysis.smk --use-singularity create_all_metal
 """
 include: "read-config.smk"
 container: config['container']
@@ -37,6 +38,10 @@ rule metal:
         cmd=temp("output/meta-analysis/metal/{group}.{phenotype}.cmd")
     log:
         "output/meta-analysis/metal/{group}.{phenotype}.log"
+    resources:
+        cpus_per_task=1,
+        mem_mb=2000,
+        time="1:0:0",
     shell:
         """
         # Create command file
