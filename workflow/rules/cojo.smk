@@ -99,7 +99,7 @@ rule cojo:
             ".cma.cojo",
             ".ldr.cojo")
     log:
-        "output/meta-analysis/cojo/{group}.{phenotype}/{group}.{phenotype}.{chrom}.{start}.{end}.snakemake.log"
+        "output/meta-analysis/cojo/{group}.{phenotype}/{group}.{phenotype}.{chrom}.{start}.{end}.cojo.log"
     shell:
         """
         workflow/scripts/run_cojo.sh \
