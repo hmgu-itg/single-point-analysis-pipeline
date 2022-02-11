@@ -12,6 +12,8 @@ import re
 import pandas as pd
 
 include: "read-config.smk"
+include: "meta-analysis.smk"
+
 container: config['container']
 
 peaklist = expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", group=config['group'])[0]
@@ -43,19 +45,29 @@ rule all_cojo:
 
 
 rule make_cojofile:
+    '''
+    Creates cojofile from bfile and metal.
+    bfile is only used to calculate the "sample size" value for each variant (The "N" column of cojofile).
+    The input metal file makes up bulk of the cojofile. 
+    
+
+    Reference
+    --------
+    1. https://yanglab.westlake.edu.cn/software/gcta/#COJO
+    2. https://genome.sph.umich.edu/wiki/METAL_Documentation
+    '''
     input:
-        metal="output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz",
-        metal_index="output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz.tbi",
-        bfiles=multiext("output/meta-analysis/temp-bfiles/{group}.{phenotype}", '.bed', '.bim', '.fam')
+        metal=rules.filter_metal.output.gz,
+        bfiles=rules.phenotype_mac_filter.output.bfile
     params:
         group="{group}",
         phenotype="{phenotype}",
-        bfile="output/meta-analysis/temp-bfiles/{group}.{phenotype}",
+        bfile=rules.phenotype_mac_filter.params.out,
         prefix="output/meta-analysis/cojofile/{group}.{phenotype}"
     output:
-        "output/meta-analysis/cojofile/{group}.{phenotype}.miss500.ma.gz"
+        "output/meta-analysis/cojofile/{group}.{phenotype}.ma.gz"
     log:
-        "output/meta-analysis/cojofile/{group}.{phenotype}.miss500.ma.log"
+        "output/meta-analysis/cojofile/{group}.{phenotype}.log"
     shell:
         """
         workflow/scripts/make_cojofile.sh \
@@ -67,11 +79,11 @@ rule make_cojofile:
         """
 
 
-rule run_cojo:
+rule cojo:
     input:
-        bfiles=multiext("output/meta-analysis/temp-bfiles/{group}.{phenotype}", '.bed', '.bim', '.fam'),
-        cojofile="output/meta-analysis/cojofile/{group}.{phenotype}.miss500.ma.gz",
-        metal="output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz",
+        bfiles=rules.phenotype_mac_filter.output.bfile,
+        cojofile=rules.make_cojofile.Output,
+        metal=rules.filter_metal.output.gz
     params:
         group="{group}",
         phenotype="{phenotype}",
