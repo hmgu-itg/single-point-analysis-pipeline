@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
-make_cojofile=v0.0.1
+# 
+# We need to make sure that we're correctly parsing the effect allele to A1
+# and other allele to A2 in the cojofile. METAL outputs Allele1 and Allele2
+# as effect and other allele, so we parse Allele1 as A1 and Allele2 as A2. 
+# 
+# METAL Doc: https://genome.sph.umich.edu/wiki/METAL_Documentation
+# GCTA-COJO: https://yanglab.westlake.edu.cn/software/gcta/#COJO
+
+
+make_cojofile=v0.0.2
 group=$1
 phenotype=$2
 bfile=$3
@@ -40,9 +49,8 @@ cat \
   <(sed 's/:/ /' $tmpfile \
     | sort -n -k1.4 -k2 \
     | sed 's/ /:/' \
-    | awk '$4>0 && $NF>500' \
    ) \
-  | gzip > $prefix.miss500.ma.gz
+  | gzip > $prefix.ma.gz
 
 exec 3>-
 # rm $tmpfile
