@@ -4,7 +4,7 @@ Snakefile 5. Run COJO
 Example
 -------
 # To run cojo on all detected peaks
-$ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/cojo.smk
+$ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/cojo.smk run_all_cojo
 
 """
 import re
@@ -21,7 +21,7 @@ peaklist = expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", gr
 all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
 peaks = [f'{row.group}.{row.phenotype}/{row.group}.{row.phenotype}.{row.chrom}.{row.start}.{row.end}' for _, row in all_peaks.iterrows()]
 
-rule all_cojo:
+rule run_all_cojo:
     input:
         expand("output/meta-analysis/cojo/{peak}.jma.cojo", peak=peaks)
     output:
@@ -68,6 +68,10 @@ rule make_cojofile:
         "output/meta-analysis/cojofile/{group}.{phenotype}.ma.gz"
     log:
         "output/meta-analysis/cojofile/{group}.{phenotype}.log"
+    resources:
+        cpus_per_task=1,
+        mem_mb=2000,
+        time="1:0:0"
     shell:
         """
         workflow/scripts/make_cojofile.sh \
@@ -100,6 +104,10 @@ rule cojo:
             ".ldr.cojo")
     log:
         "output/meta-analysis/cojo/{group}.{phenotype}/{group}.{phenotype}.{chrom}.{start}.{end}.cojo.log"
+    resources:
+        cpus_per_task=1,
+        mem_mb=1000,
+        time="0:20:0"
     shell:
         """
         workflow/scripts/run_cojo.sh \
