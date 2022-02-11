@@ -15,8 +15,10 @@ from pathlib import Path
 
 import pandas as pd
 include: "read-config.smk"
+include: "meta-analysis.smk"
 
-peaklist = expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", group=config['group'])[0]
+# peaklist = expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", group=config['group'])[0]
+peaklist = f"output/meta-analysis/peaks/peaklist/all.{config['group']}.peaklist"
 
 all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
 peaks = [f'{row.group}.{row.phenotype}/{row.chrom}.{row.start}.{row.end}' for _, row in all_peaks.iterrows()]
@@ -75,10 +77,13 @@ rule collect_all_peak_csvs:
 
 rule peak_metal:
     input:
-        metal="output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz",
-        bfiles=multiext("output/meta-analysis/temp-bfiles/{group}.{phenotype}", '.bed', '.bim', '.fam')
+        # metal="output/meta-analysis/temp-bfiles/{group}.{phenotype}.metal.filtered.gz",
+        # bfiles=multiext("output/meta-analysis/temp-bfiles/{group}.{phenotype}", '.bed', '.bim', '.fam')
+        metal=rules.filter_metal.output.gz,
+        bfiles=rules.phenotype_mac_filter.output.bfile
     params:
-        bfile="output/meta-analysis/temp-bfiles/{group}.{phenotype}",
+        # bfile="output/meta-analysis/temp-bfiles/{group}.{phenotype}",
+        bfile=rules.phenotype_mac_filter.params.out,
         outdir="output/meta-analysis/peaks/{group}.{phenotype}",
         chrom="{chrom}",
         start="{start}",
@@ -96,9 +101,9 @@ rule peak_metal:
           --pos-col Pos \
           --rs-col MarkerName \
           --pval-col P-value \
-          --a1-col Ref \
-          --a2-col Alt \
-          --maf-col Alt_Freq \
+          --a1-col Allele1 \
+          --a2-col Allele2 \
+          --maf-col Freq1 \
           --build 38 \
           --assoc-file {input.metal} \
           --bfiles {params.bfile} \
