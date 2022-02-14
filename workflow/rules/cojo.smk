@@ -120,5 +120,6 @@ rule cojo:
             {params.chrom} \
             {params.start} \
             {params.end} \
-            {params.prefix} 2>&1 > {log}
+            {params.prefix} \
+            {resources.mem_mb} 2>&1 > {log}
         """
