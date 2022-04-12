@@ -1,3 +1,8 @@
+# Prerequisites
+1. Snakemake
+2. Singularity
+
+
 # Run
 1. Modify the `config.yaml` file 
 2. Variant QC
@@ -36,7 +41,7 @@ snakemake --cores 1 --use-singularity all1
 ## 3. Single-cohort association
 Run single-cohort single-point association analysis using GCTA-MLMA
 ```bash
-snakemake --cores 1 --use-singularity all2
+snakemake --cores 1 --resources rate_limit=30 --use-singularity all2
 ```
 
 
@@ -55,7 +60,7 @@ snakemake --cores 1 --use-singularity detect_all_peaks
 ## 6. Plot signals
 Run PeakPlotter on all signal regions to create regional plots and annotated data.
 ```bash
-snakemake --cores 1 --use-singularity collect_all_peak_csvs
+snakemake --cores 1 --resources rate_limit=30 --use-singularity collect_all_peak_csvs
 ```
 
 ## 7. Select independent signals
