@@ -17,11 +17,6 @@ import pandas as pd
 include: "read-config.smk"
 include: "meta-analysis.smk"
 
-# peaklist = expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", group=config['group'])[0]
-peaklist = f"output/meta-analysis/peaks/peaklist/all.{config['group']}.peaklist"
-
-all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
-peaks = [f'{row.group}.{row.phenotype}/{row.chrom}.{row.start}.{row.end}' for _, row in all_peaks.iterrows()]
 
 rule get_vep_query_list:
     input:
@@ -50,9 +45,16 @@ rule get_vep_query_list:
                     f.write('\n')
         pd.DataFrame(files).to_csv(output[0], index = False, header = False)
 
+
+def collect_all_peak_csvs_input(w):
+    peaklist = f"output/meta-analysis/peaks/peaklist/all.{config['group']}.peaklist"
+
+    all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
+    peaks = [f'output/meta-analysis/peaks/{row.group}.{row.phenotype}/{row.chrom}.{row.start}.{row.end}.500kb.csv' for _, row in all_peaks.iterrows()]
+
 rule collect_all_peak_csvs:
     input:
-        expand("output/meta-analysis/peaks/{peak}.500kb.csv", peak = peaks)
+        collect_all_peak_csvs_input
     params:
         p_threshold=config['QC_thresholds']['p-value']
     output:

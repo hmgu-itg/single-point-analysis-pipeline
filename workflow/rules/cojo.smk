@@ -16,14 +16,17 @@ include: "meta-analysis.smk"
 
 container: config['container']
 
-peaklist = expand("output/meta-analysis/peaks/peaklist/all.{group}.peaklist", group=config['group'])[0]
 
-all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
-peaks = [f'{row.group}.{row.phenotype}/{row.group}.{row.phenotype}.{row.chrom}.{row.start}.{row.end}' for _, row in all_peaks.iterrows()]
+def run_all_cojo_input(w):
+    peaklist = f"output/meta-analysis/peaks/peaklist/all.{config['group']}.peaklist"
+
+    all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
+    peaks = [f'output/meta-analysis/cojo/{row.group}.{row.phenotype}/{row.group}.{row.phenotype}.{row.chrom}.{row.start}.{row.end}.jma.cojo' for _, row in all_peaks.iterrows()]
+    return peaks
 
 rule run_all_cojo:
     input:
-        expand("output/meta-analysis/cojo/{peak}.jma.cojo", peak=peaks)
+        run_all_cojo_input
     output:
         "output/meta-analysis/cojo/all.jma.cojo.csv.gz"
     run:
