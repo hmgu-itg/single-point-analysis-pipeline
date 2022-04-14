@@ -48,6 +48,8 @@ rule gcta:
         mlma_bgz="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
         mlma_bgz_tbi="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz.tbi"
     threads: 5
+    resources:
+        mem_mb=5000
     log: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.log"
     shell:
         """
@@ -76,8 +78,7 @@ rule manqq_gcta:
         prefix="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}",
         filter="{filter}"
     resources:
-        cpus_per_task=1,
-        mem_per_cpu="3G",
+        mem_mb=1000,
         rate_limit=1
     output: 
         "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.run_conf",
