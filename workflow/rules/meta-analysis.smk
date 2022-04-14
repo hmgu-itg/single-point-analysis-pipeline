@@ -39,9 +39,7 @@ rule metal:
     log:
         "output/meta-analysis/metal/{group}.{phenotype}.log"
     resources:
-        cpus_per_task=1,
-        mem_mb=2000,
-        time="1:0:0",
+        mem_mb=2000
     shell:
         """
         # Create command file
@@ -98,9 +96,8 @@ rule merge_bfiles:
     output:
         bfile=multiext("output/bfile/combined", '.bed', '.bim', '.fam'),
         missnp="output/bfile/combined-merge.missnp"
-    threads: 20
+    threads: 5
     resources:
-        cpus_per_task=20,
         mem_mb=5000
     shell:
         """
@@ -145,10 +142,9 @@ rule combined_freq:
     output:
         frq="output/bfile/combined.frq",
         frq2="output/bfile/combined.frq2"
-    threads: 20
+    threads: 5
     resources:
-        cpus_per_task=20,
-        mem_per_cpu="5G"
+        mem_mb=5000
     shell:
         """
         plink --threads {threads} \
@@ -183,11 +179,9 @@ rule phenotype_mac_filter:
     output:
         bfile=multiext("output/meta-analysis/temp-bfiles/{group}.{phenotype}", '.bed', '.bim', '.fam', '.nosex'),
         excludelist="output/meta-analysis/temp-bfiles/{group}.{phenotype}.mac.excludelist"
-    threads: 20
+    threads: 5
     resources:
-        cpus_per_task=20,
-        mem_mb=5000,
-        time="2:0:0"
+        mem_mb=5000
     shell:
         """
         mac_threshold=$(awk -F' ' -v id='{params.id}' '{{if ($1==id){{print $4}}}}' {input.mac})
