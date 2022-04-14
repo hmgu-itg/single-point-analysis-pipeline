@@ -47,10 +47,7 @@ rule gcta:
     output:
         mlma_bgz="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
         mlma_bgz_tbi="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz.tbi"
-    threads: 20
-    resources:
-        cpus_per_task=20,
-        mem_per_cpu="10G"
+    threads: 5
     log: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.log"
     shell:
         """
