@@ -51,6 +51,7 @@ def collect_all_peak_csvs_input(w):
 
     all_peaks = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
     peaks = [f'output/meta-analysis/peaks/{row.group}.{row.phenotype}/{row.chrom}.{row.start}.{row.end}.500kb.csv' for _, row in all_peaks.iterrows()]
+    return peaks
 
 rule collect_all_peak_csvs:
     input:
