@@ -27,7 +27,7 @@ $ snakemake \
     output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png
 
 """
-include: "read-config.smk"
+include: "1. variant-qc.smk"
 
 rule all2:
     input:

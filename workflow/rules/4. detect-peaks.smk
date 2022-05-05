@@ -7,8 +7,7 @@ Example
 $ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/detect-peaks.smk  detected_all_peaks
 $ snakemake --profile slurm --keep-going --use-singularity --snakefile workflow/rules/detect-peaks.smk detected_all_peaks
 """
-include: "read-config.smk"
-include: 'meta-analysis.smk'
+include: '3. meta-analysis.smk'
 
 rule detect_all_peaks:
     input:

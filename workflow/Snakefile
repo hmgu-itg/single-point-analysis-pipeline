@@ -1,11 +1,4 @@
-include: "rules/read-config.smk"
-include: "rules/variant-qc.smk"
-include: "rules/single-cohort.smk"
-include: "rules/meta-analysis.smk"
-include: "rules/detect-peaks.smk"
-include: "rules/peakplot.smk"
-include: "rules/cojo.smk"
-
+include: "rules/6. cojo.smk"
 
 
 rule run_single_point:

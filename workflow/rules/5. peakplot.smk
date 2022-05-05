@@ -14,8 +14,7 @@ $ snakemake --cores 1 --restart-times 3 --keep-going --use-singularity --snakefi
 from pathlib import Path
 
 import pandas as pd
-include: "read-config.smk"
-include: "meta-analysis.smk"
+include: "4. detect-peaks.smk"
 
 
 rule get_vep_query_list:

@@ -11,8 +11,7 @@ import re
 
 import pandas as pd
 
-include: "read-config.smk"
-include: "meta-analysis.smk"
+include: "5. peakplot.smk"
 
 container: config['container']
 

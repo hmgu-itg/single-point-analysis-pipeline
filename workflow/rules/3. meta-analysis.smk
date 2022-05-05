@@ -4,8 +4,7 @@ Snakefile 2.
 $ snakemake --cores 100 --snakefile workflow/rules/meta-analysis.smk --use-singularity --batch create_all_metal=1/10
 $ snakemake --cores 100 --snakefile workflow/rules/meta-analysis.smk --use-singularity create_all_metal
 """
-include: "read-config.smk"
-container: config['container']
+include: "2. single-cohort.smk"
 
 
 # TODO: How should we deal with variants that's only in one cohort?

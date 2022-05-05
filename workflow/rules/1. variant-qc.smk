@@ -1,6 +1,6 @@
 import pandas as pd
 
-include: "read-config.smk"
+include: "0. read-config.smk"
 container: config['container']
 
 rule all1:
