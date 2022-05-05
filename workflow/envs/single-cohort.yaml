@@ -1,0 +1,7 @@
+name: single-cohort
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - gcta=1.93.2beta=h9ee0642_1

@@ -1,3 +1,5 @@
+container: https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif
+
 # Path to gcta input phenotype file. Must include the three wildcards: cohort, group, and phenotype 
 input: ""
 
@@ -33,4 +35,4 @@ QC_thresholds:
   MAC: 10
   HWE: 0.00001 # 1e-5
   missingness: 0.01
-  p-value: 2.1174286727106297e-10
+  p-value: 5e-8

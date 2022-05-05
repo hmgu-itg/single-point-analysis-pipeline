@@ -1,12 +1,40 @@
-# configfile: "config.yaml"
+"""
+Snakefile 1.
+
+Run GCTA-MLMA and ManQQ
+
+Example
+-------
+# To run GCTA and ManQQ on all
+$ snakemake --cores 10 --restart-times 3 --keep-going --use-singularity --snakefile workflow/rules/single-cohort.smk 
+
+# To run a single GCTA run
+$ snakemake \
+    --cores 1 \
+    --restart-times 3 \
+    --keep-going \
+    --use-singularity \
+    --snakefile workflow/rules/single-cohort.smk \
+    output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz
+
+# To run a single ManQQ run
+$ snakemake \
+    --cores 1 \
+    --restart-times 3 \
+    --keep-going \
+    --use-singularity \
+    --snakefile workflow/rules/single-cohort.smk \
+    output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png
+
+"""
 include: "read-config.smk"
-conda: "conda/environment.yaml"
-# snakemake --profile slurm --use-conda --keep-going --show-failed-log --quiet --snakefile rules/single-cohort.smk --conda-frontend conda
 
-rule all:
+rule all2:
     input:
-        expand("output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz", cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'])
-
+        expand("output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz", cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes']),
+        expand("output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png", 
+               cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'], filter=[0.0, 0.001])
+        
 rule gcta:
     input:
         phenotype=config['input'],
@@ -19,47 +47,60 @@ rule gcta:
     output:
         mlma_bgz="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
         mlma_bgz_tbi="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz.tbi"
-    threads: 20
+    threads: 5
+    resources:
+        mem_mb=5000
     log: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.log"
     shell:
         """
-        scripts/run_gcta.sh \
-            {input.phenotype} \
-            {params.outprefix} \
-            {params.bfile} \
-            {params.grm} \
-            {threads} 2>&1 > {log}
-        rm {params.outprefix}.log
+        pheno_file={params.outprefix}.pheno
+        mlma={params.outprefix}.mlma
+        mlma_bgz={params.outprefix}.mlma.gz
+
+        awk '{{OFS=\"\\t\"}}NR!=1{{print $1,$1,$3}}' {input.phenotype} > $pheno_file 2> {log}
+
+        gcta64 --mlma \
+                --bfile {params.bfile} \
+                --grm {params.grm} \
+                --pheno $pheno_file \
+                --out {params.outprefix} \
+                --threads {threads} 2>&1 >> {log}
+        bgzip -c $mlma > $mlma_bgz 2>> {log}
+        tabix --skip-lines 1 --sequence 1 --begin 3 --end 3 $mlma_bgz 2>&1 >> {log}
+
+        rm $pheno_file $mlma {params.outprefix}.log 2>&1 >> {log}
         """
 
 
-rule peak_gcta:
-    input:
-        mlma="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
-        bfile=multiext("output/bfile/{cohort}", '.bed', '.bim', '.fam')
-    singularity: "library://hmgu-itg/default/peakplotter"
+rule manqq_gcta:
+    input: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz"
     params:
-        bfile="output/bfile/{cohort}"
+        prefix="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}",
+        filter="{filter}"
     resources:
+        mem_mb=1000,
         rate_limit=1
     output: 
-        directory=directory("output/single-cohort/peaks/{cohort}/{cohort}.{panel}.{protein}"),
-        done="output/single-cohort/peaks/{cohort}/{cohort}.{panel}.{protein}/done"
-    log: "output/single-cohort/peaks/{cohort}/{cohort}.{panel}.{protein}"
+        "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.run_conf",
+        "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png",
+        "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.lambda.txt"
+    log:
+        out="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.o",
+        err="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.e"
+    container: "library://hmgu-itg/default/manqq:0.2.3"
     shell:
         """
-        peakplotter  \
-          --bfiles {params.bfile} \
+        run_manqq.R \
           --chr-col Chr \
-          --pos-col bp \
-          --rs-col SNP \
           --pval-col p \
-          --a1-col A1 \
-          --a2-col A2 \
-          --maf-col Freq \
+          --pos-col bp \
+          --a1 A1 \
+          --a2 A2 \
           --build 38 \
-          --overwrite \
-          --assoc-file {input.mlma} \
-          --out {output.directory} 2>&1 > {log}
-        touch {output.done}
+          --image png \
+          --af-col Freq \
+          --no-man \
+          --maf-filter {params.filter} \
+          {input} \
+          {params.prefix} > {log.out} 2> {log.err}
         """
