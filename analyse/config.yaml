@@ -1,0 +1,22 @@
+
+## Jobs
+# Number of cores/jobs to use
+jobs: 10
+
+## Singularity
+# Whether to use a singularity container to run the rules.
+# Using singularity is recommended, as the predefined containers
+# contain all necessary dependencies.
+use-singularity: True
+singularity-args: ""
+
+
+## Resources
+# Default amount of memory in Mb to use for each rule
+default-resources:
+  - mem_mb=5000
+
+# Maximum amount of resources allowed to use at any given moment
+resources:
+  - mem_mb=20000
+  - rate_limit=10
