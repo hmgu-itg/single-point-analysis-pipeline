@@ -39,7 +39,7 @@ rule gcta:
 
 
 rule manqq_gcta:
-    input: rules.gcta.output[0]
+    input: rules.gcta.output.mlma_bgz
     params:
         prefix="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}",
         filter="{filter}"
@@ -125,7 +125,10 @@ rule plotpeak:
 
 def plot_all_peaks_input(w):
     peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
-    peaklist = pd.read_csv(peaklist, sep = '\t', header = None)
+    try:
+        peaklist = pd.read_csv(peaklist, sep = '\t', header = None)
+    except pd.errors.EmptyDataError:
+        return []
     return [rules.plotpeak.output[0].format(cohort=w.cohort, group=group, phenotype=phenotype, chrom=chrom, start=start, end=end)
             for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
 

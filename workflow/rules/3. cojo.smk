@@ -10,9 +10,11 @@ $ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules
 include: "2. single-cohort.smk"
 
 def run_all_cojo_input(w):
-    #peaklist = f"output/{w.cohort}/{w.group}/{w.phenotype}/peaklist"
     peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
-    peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
+    try:
+        peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
+    except pd.errors.EmptyDataError:
+        return []
     peaks = [f'output/{w.cohort}/{group}/{phenotype}/cojo/{phenotype}.{chrom}.{start}.{end}.jma.cojo' for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
     return peaks
 
@@ -22,6 +24,11 @@ rule run_all_cojo:
     output:
         "output/{cohort}/{group}/{phenotype}/{phenotype}.jma.cojo.csv.gz"
     run:
+        if len(input)==0: # When no signif signal
+            empty = pd.DataFrame(columns = ["group", "phenotype", "peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
+            empty.to_csv(output[0], index = False, header = True, compression = 'gzip')
+            return
+
         concat_list = list()
         for f in input:
             string = re.sub(r'.*\/cojo\/', '', f)
@@ -30,7 +37,7 @@ rule run_all_cojo:
             df = pd.read_csv(f, sep = '\t', header = 0)
             min_p = df['p'].min()
             df['is cojo tophit'] = False
-            df.loc[df['p'] == min_p, 'is cojo tophit'] = True
+            df.loc[df['p'] == min_p, 'cojo_tophit'] = True
             df.insert(0, 'group', wildcards.group)
             df.insert(1, 'phenotype', wildcards.phenotype)
             df.insert(2, 'peak', peak)
