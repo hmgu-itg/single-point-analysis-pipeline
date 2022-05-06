@@ -1,12 +1,14 @@
-include: "rules/2. single-cohort.smk"
+include: "rules/3. cojo.smk"
 
 
 rule filter_genotype:
     input:
-        multiext(f"output/{COHORT}/bfile/{COHORT}", '.bed', '.bim', '.fam')
+        multiext(f"output/{COHORT}/bfile/{COHORT}", '.bed', '.bim', '.fam'),
+        f'output/{COHORT}/bfile/{COHORT}.samplesize'
 
 rule run:
     input:
         f"output/{COHORT}/{GROUP}/{PHENOTYPE}/manqq/{PHENOTYPE}.{config['manqq']['maf_filter']}.qq.png",
-        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/peaks/.done"
+        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/peaks/.done",
+        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/{PHENOTYPE}.jma.cojo.csv.gz"
 

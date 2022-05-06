@@ -40,7 +40,9 @@ rule missingness:
         input=BFILE,
         output="output/{cohort}/bfile/{cohort}"
     threads: workflow.cores * 0.5
-    output: multiext("output/{cohort}/bfile/{cohort}", '.lmiss', '.imiss')
+    output:
+        lmiss="output/{cohort}/bfile/{cohort}.lmiss",
+        imiss="output/{cohort}/bfile/{cohort}.imiss"
     shell:
         """
         plink \
@@ -52,7 +54,7 @@ rule missingness:
         """
 
 rule exclude_missingness:
-    input: "output/{cohort}/bfile/{cohort}.lmiss"
+    input: rules.missingness.output.lmiss
     params: config['QC_thresholds']['missingness']
     output: "output/{cohort}/bfile/{cohort}.missingness.exclude.txt"
     shell:
@@ -93,6 +95,39 @@ rule filter_bfile:
           --threads {threads}
         awk -F$'\\t' 'BEGIN{{OFS=\"\\t\"}}{{print $1,\"chr\"$1\":\"$4,$3,$4,$5,$6}}' {params.out}.bim | sponge {params.out}.bim
         """
+
+
+rule get_samplesize:
+    '''
+    This file is used later when creating the cojofile.
+    
+    Warning:
+    The awk command was only tested in mawk (1.3.4 20200120). 
+    This awk command may not work as intended using other type of awk (original awk, gawk)!
+    '''
+    input:
+        rules.filter_bfile.output
+    params:
+        input='output/{cohort}/bfile/{cohort}',
+        output='output/{cohort}/bfile/{cohort}.miss'
+    threads: workflow.cores
+    output:
+        lmiss=temp('output/{cohort}/bfile/{cohort}.miss.lmiss'),
+        imiss=temp('output/{cohort}/bfile/{cohort}.miss.imiss'),
+        samplesize='output/{cohort}/bfile/{cohort}.samplesize'
+    shell: """
+        plink \
+          --bfile {params.input} \
+          --memory {resources.mem_mb} \
+          --threads {threads} \
+          --missing \
+          --out {params.output} \
+          --silent
+
+        awk -F '[[:space:]]+' '{{if(NR!=1){{print $3, $5-$4}}}}' {output.lmiss} > {output.samplesize}
+        """
+
+
 
 
 # rule mac:

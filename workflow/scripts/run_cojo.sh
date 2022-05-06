@@ -1,29 +1,25 @@
 #!/usr/bin/env bash
-run_cojo=v0.3.0
+run_cojo=v0.4.0
 bfile=$1
 cojofile=$2
-metal_file=$3
+assoc_file=$3
 threshold=$4 # p-value threshold
-group=$5
-phenotype=$6
-chrom=$7
-start=$8
-end=$9
-prefix=${10} # output prefix
-memory=${11}
+chrom=$5
+start=$6
+end=$7
+prefix=${8} # output prefix
+memory=${9}
 
 
 echo "=== Running run_cojo.sh ===
 run_cojo: $run_cojo
-group: $group
-phenotype: $phenotype
 bfile: $bfile
 chrom: $chrom
 start: $start
 end: $end
 threshold: $threshold
 cojofile: $cojofile
-metal_file: $metal_file
+assoc_file: $assoc_file
 prefix: $prefix
 ===========================
 "
@@ -33,12 +29,12 @@ prefix: $prefix
 # See Plink 1.9's .qassoc file format for more details
 qassoc=$prefix.qassoc
 echo "[$(date), Step 1/4] Creating $qassoc"
-tabix $metal_file ${chrom}:${start}-${end} | \
+tabix $assoc_file ${chrom}:${start}-${end} | \
     awk 'BEGIN{OFS="\t";print "CHR\tSNP\tBP\tBETA\tSE\tR2\tT\tP"} \
       {
-        split($12, a, "[eE]") 
-        if($12<1e-6 || (length(a)>1 && a[2] < -6)){
-          print $1, "chr"$1":"$3, $3, $10, $11, 1, 1, $12}
+        split($9, a, "[eE]") 
+        if($9<1e-6 || (length(a)>1 && a[2] < -6)){
+          print $1, $2, $3, $7, $8, 1, 1, $9}
       }' > $qassoc
 
 
