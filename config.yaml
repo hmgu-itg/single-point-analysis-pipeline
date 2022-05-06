@@ -1,7 +1,26 @@
-container:
-  all: "https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif"
-  manqq: "library://hmgu-itg/default/manqq:0.2.3"
-  peakplotter: "library://hmgu-itg/default/peakplotter:0.4.3"
+# QC configuration
+QC_thresholds:
+  # Filters to apply to the genotype data
+  MAC: 10
+  HWE: 1e-5
+  missingness: 0.01
+  # Significance threshold
+  p-value: 5e-8
+
+
+# MAF filter to apply before generating the QQ-plot
+manqq:
+  maf_filter: 0.001
+
+# PeakPlotter peak width.
+# 1Mb here means the minimum peak window will be 2Mb (1Mb up and downstream)
+peakplotter:
+  span: 1000000
+
+## Input values
+# You can hard code the values here
+# or provide these values via the commandline
+# as suggested in the README.
 
 # Cohort name
 cohort: ""
@@ -21,14 +40,10 @@ phenotype: ""
 # Path to phenotype file
 phenotype_file: ""
 
-manqq:
-  maf_filter: 0.001
 
-peakplotter:
-  span: 1000000
-
-QC_thresholds:
-  MAC: 10
-  HWE: 1e-5
-  missingness: 0.01
-  p-value: 5e-8
+## Predefined containers
+# Do not change unless you know what you're doing 
+container:
+  all: "https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif"
+  manqq: "library://hmgu-itg/default/manqq:0.2.3"
+  peakplotter: "library://hmgu-itg/default/peakplotter:0.4.3"
