@@ -4,13 +4,25 @@ Snakefile 0.
 
 """
 import sys
-import pandas as pd
+from pathlib import Path
 
 configfile: "config.yaml"
 
+COHORT = config['cohort']
+GROUP = config['group']
+BFILE = config['bfile']
+GRM = config['grm']
+PHENOTYPE = config['phenotype']
+PHENOTYPE_FILE = config['phenotype_file']
 
-if isinstance(config['phenotypes'], str):
-    config['phenotypes'] = pd.read_csv(config['phenotypes'], header = None)[0].to_list()
+# Checks
+if not isinstance(COHORT, str) or len(COHORT)<2:
+    print('`cohort` config value must be string and length>1')
+    sys.exit(1)
+
+if not isinstance(config['group'], str) or len(COHORT)<2:
+    print('`group` config value must be string and length>1')
+    sys.exit(1)
 
 
 config['QC_thresholds']['MAC'] = int(config['QC_thresholds']['MAC'])

@@ -1,29 +1,25 @@
-container: https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif
+container:
+  all: "https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif"
+  manqq: "library://hmgu-itg/default/manqq:0.2.3"
+  peakplotter: "library://hmgu-itg/default/peakplotter:0.4.3"
 
-# Path to gcta input phenotype file. Must include the three wildcards: cohort, group, and phenotype 
-input: ""
+# Cohort name
+cohort: ""
 
+# Path to cohort's plink bfile prefix
+bfile: ""
 
-# Keys as cohort name, and values as dictionary
-cohorts:
-  cohortA:
-    bfile: "" # Paths to the cohort's plink bfiles
-    grm: "" # Path to the cohort's genetic relatedness matrix
-  cohort:
-    bfile: ""
-    grm: ""
-    
+# Path to cohort's genetic relatedness matrix
+grm: ""
 
+# Group name
 group: ""
 
+# Phenotype name
+phenotype: ""
 
-phenotypes: ""
-# Can be either a list of phenotype values or a path to text file with phenotype names as a single column
-# Example:
-# PanelA: ['ProteinA', 'ProteinB']
-# or
-# PanelA: '/path/to/list_of_PanelA_proteins.txt'
-# text file must be a single column file with no header and each row being the phenotype name
+# Path to phenotype file
+phenotype_file: ""
 
 manqq:
   maf_filter: 0.001
@@ -33,6 +29,6 @@ peakplotter:
 
 QC_thresholds:
   MAC: 10
-  HWE: 0.00001 # 1e-5
+  HWE: 1e-5
   missingness: 0.01
   p-value: 5e-8

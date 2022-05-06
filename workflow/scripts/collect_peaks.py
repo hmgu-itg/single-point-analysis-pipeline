@@ -17,13 +17,13 @@ phenotype = sys.argv[5]
 output = sys.argv[6]
 
 
-chr_col = 'Chrom'
-pos_col = 'Pos'
-rs_col = 'MarkerName'
-pval_col = 'P-value'
-a1_col = 'Allele1'
-a2_col = 'Allele2'
-maf_col = 'Freq1' # Frequency of A1
+chr_col = 'Chr'
+pos_col = 'bp'
+rs_col = 'SNP'
+pval_col = 'p'
+a1_col = 'A1'
+a2_col = 'A2'
+maf_col = 'Freq' # Frequency of A1
 logger = get_test_logger()
 
 

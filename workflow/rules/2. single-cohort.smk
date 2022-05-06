@@ -1,93 +1,59 @@
 """
 Snakefile 1.
 
-Run GCTA-MLMA and ManQQ
-
-Example
--------
-# To run GCTA and ManQQ on all
-$ snakemake --cores 10 --restart-times 3 --keep-going --use-singularity --snakefile workflow/rules/single-cohort.smk 
-
-# To run a single GCTA run
-$ snakemake \
-    --cores 1 \
-    --restart-times 3 \
-    --keep-going \
-    --use-singularity \
-    --snakefile workflow/rules/single-cohort.smk \
-    output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz
-
-# To run a single ManQQ run
-$ snakemake \
-    --cores 1 \
-    --restart-times 3 \
-    --keep-going \
-    --use-singularity \
-    --snakefile workflow/rules/single-cohort.smk \
-    output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png
-
+Run association and create QQ-plot and PeakPlotter plot.
 """
 include: "1. variant-qc.smk"
 
-rule all2:
-    input:
-        expand("output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz", cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes']),
-        expand("output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png", 
-               cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'], filter=[0.0, 0.001])
         
 rule gcta:
     input:
-        phenotype=config['input'],
-        bfile=multiext("output/bfile/{cohort}", '.bed', '.bim', '.fam'),
-        grm=lambda w: multiext(config["cohorts"][w.cohort]['grm'], '.grm.bin', '.grm.id', '.grm.N.bin')
+        phenotype=PHENOTYPE_FILE,
+        bfile=rules.filter_bfile.output,
+        grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
-        outprefix="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}",
-        bfile="output/bfile/{cohort}",
-        grm=lambda w: config["cohorts"][w.cohort]['grm']
+        out="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}",
+        bfile="output/{cohort}/bfile/{cohort}",
+        grm=GRM
     output:
-        mlma_bgz="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz",
-        mlma_bgz_tbi="output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz.tbi"
-    threads: 5
-    resources:
-        mem_mb=5000
-    log: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.log"
+        pheno="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.pheno",
+        mlma=temp("output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma"),
+        mlma_bgz="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma.gz",
+        mlma_bgz_tbi="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma.gz.tbi"
+    threads: workflow.cores
+    log: "output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma.log"
     shell:
         """
-        pheno_file={params.outprefix}.pheno
-        mlma={params.outprefix}.mlma
-        mlma_bgz={params.outprefix}.mlma.gz
-
-        awk '{{OFS=\"\\t\"}}NR!=1{{print $1,$1,$3}}' {input.phenotype} > $pheno_file 2> {log}
-
+        awk '{{OFS=\"\\t\"}}{{print $1,$1,$2}}' {input.phenotype} > {output.pheno} 2> {log}
         gcta64 --mlma \
                 --bfile {params.bfile} \
                 --grm {params.grm} \
-                --pheno $pheno_file \
-                --out {params.outprefix} \
+                --pheno {output.pheno} \
+                --out {params.out} \
                 --threads {threads} 2>&1 >> {log}
-        bgzip -c $mlma > $mlma_bgz 2>> {log}
-        tabix --skip-lines 1 --sequence 1 --begin 3 --end 3 $mlma_bgz 2>&1 >> {log}
-
-        rm $pheno_file $mlma {params.outprefix}.log 2>&1 >> {log}
+        bgzip -c {output.mlma} > {output.mlma_bgz} 2>> {log}
+        tabix --skip-lines 1 --sequence 1 --begin 3 --end 3 {output.mlma_bgz} 2>&1 >> {log}
+        
+        rm {params.out}.log 2>&1 >> {log}
         """
 
 
 rule manqq_gcta:
-    input: "output/single-cohort/gcta/{cohort}/{cohort}.{group}.{phenotype}.mlma.gz"
+    input: rules.gcta.output[0]
     params:
-        prefix="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}",
+        prefix="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}",
         filter="{filter}"
     resources:
         mem_mb=1000,
         rate_limit=1
     output: 
-        "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.run_conf",
-        "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.qq.png",
-        "output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.lambda.txt"
+        "output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.run_conf",
+        "output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.qq.png",
+        "output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.lambda.txt"
     log:
-        out="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.o",
-        err="output/single-cohort/manqq/{cohort}/{cohort}.{group}.{phenotype}.manqq.{filter}.e"
-    container: "library://hmgu-itg/default/manqq:0.2.3"
+        out="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.o",
+        err="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.e"
+    singularity: config['container']['manqq']
     shell:
         """
         run_manqq.R \
@@ -104,3 +70,67 @@ rule manqq_gcta:
           {input} \
           {params.prefix} > {log.out} 2> {log.err}
         """
+
+
+checkpoint detect_peaks:
+    input:
+        rules.gcta.output.mlma_bgz
+    params:
+        span=config['peakplotter']['span'],
+        signif=config['QC_thresholds']['p-value']
+    output:
+        "output/{cohort}/{group}/{phenotype}/peaklist"
+    log:
+        "output/{cohort}/{group}/{phenotype}/peaklist.log"
+    singularity: config['container']['peakplotter']
+    shell:
+        "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {wildcards.group} {wildcards.phenotype} {output} 2>&1 > {log}"
+
+
+rule plotpeak:
+    input:
+        assoc=rules.gcta.output.mlma_bgz,
+        bfile=rules.filter_bfile.output
+    params:
+        bfile=rules.filter_bfile.params.out,
+        outdir="output/{cohort}/{group}/{phenotype}/peaks",
+        chrom="{chrom}",
+        start="{start}",
+        end="{end}"
+    singularity: config['container']['peakplotter']
+    resources:
+        rate_limit=1
+    output:
+        multiext("output/{cohort}/{group}/{phenotype}/peaks/{chrom}.{start}.{end}.500kb", '.html', '.csv')
+    shell:
+        """
+        peakplotter-region  \
+          --chr-col Chr \
+          --pos-col bp \
+          --rs-col SNP \
+          --pval-col p \
+          --a1-col A1 \
+          --a2-col A2 \
+          --maf-col Freq \
+          --build 38 \
+          --assoc-file {input.assoc} \
+          --bfiles {params.bfile} \
+          --out {params.outdir} \
+          --chrom {wildcards.chrom} \
+          --start {wildcards.start} \
+          --end {wildcards.end} \
+          --debug
+        """
+
+
+def plot_all_peaks_input(w):
+    peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
+    peaklist = pd.read_csv(peaklist, sep = '\t', header = None)
+    return [rules.plotpeak.output[0].format(cohort=w.cohort, group=group, phenotype=phenotype, chrom=chrom, start=start, end=end)
+            for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
+
+rule plot_all_peaks:
+    input:
+        plot_all_peaks_input
+    output:
+        touch("output/{cohort}/{group}/{phenotype}/peaks/.done")

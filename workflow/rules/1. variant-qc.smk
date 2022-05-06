@@ -1,57 +1,60 @@
 import pandas as pd
 
 include: "0. read-config.smk"
-container: config['container']
+container: config['container']['all']
 
-rule all1:
+rule step1:
     input:
-        expand("output/bfile/{cohort}.bed", cohort=config['cohorts']),
-        'output/bfile/mac/all.mac.txt'
+        multiext(f"output/{COHORT}/bfile/{COHORT}", '.bed', '.bim', '.fam')
 
 
 rule hwe:
-    input: lambda w: multiext(config['cohorts'][w.cohort]['bfile'], '.bed', '.bim', '.fam')
+    input: multiext(BFILE, '.bed', '.bim', '.fam')
     params:
-        input=lambda w: config['cohorts'][w.cohort]['bfile'],
-        output="output/bfile/hwe/{cohort}"
-    output: multiext("output/bfile/hwe/{cohort}", '.hwe', '.log', '.nosex')
-    conda: "../envs/variant-qc.yaml"
+        input=BFILE,
+        output="output/{cohort}/bfile/{cohort}"
+    threads: workflow.cores * 0.5
+    output: multiext("output/{cohort}/bfile/{cohort}", '.hwe', '.log', '.nosex')
     shell:
         """
         plink \
           --bfile {params.input} \
+          --memory {resources.mem_mb} \
+          --threads {threads} \
           --hardy \
           --out {params.output}
         """
 
 rule exclude_hwe:
-    input: "output/bfile/hwe/{cohort}.hwe"
+    input: "output/{cohort}/bfile/{cohort}.hwe"
     params: config['QC_thresholds']['HWE']
-    output: "output/bfile/hwe/{cohort}.exclude.txt"
+    output: "output/{cohort}/bfile/{cohort}.hwe.exclude.txt"
     shell:
         """
         tail -n+2 {input} | tr -s ' ' | awk '{{if ($NF<={params}) {{print $2}}}}' > {output}
         """
 
 rule missingness:
-    input: lambda w: multiext(config['cohorts'][w.cohort]['bfile'], '.bed', '.bim', '.fam')
+    input: multiext(BFILE, '.bed', '.bim', '.fam')
     params:
-        input=lambda w: config['cohorts'][w.cohort]['bfile'],
-        output="output/bfile/missingness/{cohort}"
-    output: multiext("output/bfile/missingness/{cohort}", '.lmiss', '.imiss')
-    conda: "../envs/variant-qc.yaml"
+        input=BFILE,
+        output="output/{cohort}/bfile/{cohort}"
+    threads: workflow.cores * 0.5
+    output: multiext("output/{cohort}/bfile/{cohort}", '.lmiss', '.imiss')
     shell:
         """
         plink \
           --bfile {params.input} \
+          --memory {resources.mem_mb} \
+          --threads {threads} \
           --missing \
           --out {params.output}
         """
 
 rule exclude_missingness:
-    input: "output/bfile/missingness/{cohort}.lmiss"
+    input: "output/{cohort}/bfile/{cohort}.lmiss"
     params: config['QC_thresholds']['missingness']
-    output: "output/bfile/missingness/{cohort}.exclude.txt"
+    output: "output/{cohort}/bfile/{cohort}.missingness.exclude.txt"
     shell:
         """
         tail -n+2 {input} | tr -s ' ' | awk '{{if ($NF>={params}) {{print $2}}}}' > {output}
@@ -60,9 +63,9 @@ rule exclude_missingness:
 
 rule collect_exclude_list:
     input:
-        "output/bfile/missingness/{cohort}.exclude.txt",
-        "output/bfile/hwe/{cohort}.exclude.txt",
-    output: "output/bfile/{cohort}.exclude.all.txt"
+        "output/{cohort}/bfile/{cohort}.hwe.exclude.txt",
+        "output/{cohort}/bfile/{cohort}.missingness.exclude.txt",
+    output: "output/{cohort}/bfile/{cohort}.all.exclude-list.txt"
     shell:
         "cat {input} > {output}"
 
@@ -72,14 +75,13 @@ rule filter_bfile:
     Single-cohort bfiles are filtered on HWE and Missingness.
     """
     input: 
-        bfile=lambda w: multiext(config['cohorts'][w.cohort]['bfile'], '.bed', '.bim', '.fam'),
-        exclude_list="output/bfile/{cohort}.exclude.all.txt"
+        bfile=multiext(BFILE, '.bed', '.bim', '.fam'),
+        exclude_list="output/{cohort}/bfile/{cohort}.all.exclude-list.txt"
     params:
-        bfile=lambda w: config['cohorts'][w.cohort]['bfile'],
-        out="output/bfile/{cohort}"
-    output: multiext("output/bfile/{cohort}", '.bed', '.bim', '.fam')
-    threads: 10
-    conda: "../envs/variant-qc.yaml"
+        bfile=BFILE,
+        out="output/{cohort}/bfile/{cohort}"
+    threads: workflow.cores
+    output: multiext("output/{cohort}/bfile/{cohort}", '.bed', '.bim', '.fam')
     shell:
         """
         plink \
@@ -87,56 +89,21 @@ rule filter_bfile:
           --exclude {input.exclude_list} \
           --make-bed \
           --out {params.out} \
+          --memory {resources.mem_mb} \
           --threads {threads}
         awk -F$'\\t' 'BEGIN{{OFS=\"\\t\"}}{{print $1,\"chr\"$1\":\"$4,$3,$4,$5,$6}}' {params.out}.bim | sponge {params.out}.bim
         """
 
 
-rule mac:
-    input: config['input']
-    params:
-        id="{cohort}.{group}.{phenotype}",
-        threshold=config['QC_thresholds']['MAC']
-    output: 'output/bfile/mac/{cohort}.{group}.{phenotype}.txt'
-    run:
-        data = pd.read_csv(input[0], sep = '\t')
-        n = data.shape[0]
-        max_mac = n * 2
-        threshold = params.threshold / max_mac
-        pd.DataFrame([[params.id, n, max_mac, threshold]]).to_csv(output[0], sep = ' ', index = False, header = False)
-
-
-rule mac_group:
-    input: lambda w: expand('output/bfile/mac/{cohort}.{group}.{phenotype}.txt', cohort=config['cohorts'], group=config['group'], phenotype=config['phenotypes'])
-    output: "output/bfile/mac/all.cohort.mac.txt"
-    shell: "cat {input} > {output}"
-    
-rule mac_all:
-    """
-    Prepares a file which contains all MAC==(int specified in config.yaml)
-    equivalent of a MAF threshold for all phenotypes and saves it to an output
-    """
-    input: "output/bfile/mac/all.cohort.mac.txt"
-    params: threshold=config['QC_thresholds']['MAC']
-    output: "output/bfile/mac/all.mac.txt"
-    run:
-        mac = pd.read_csv(
-            input[0],
-            sep = ' ',
-            header = None,
-            names = ['id', 'n', 'max_mac', 'maf_threshold'])
-        mac['cohort'] = [i[0] for i in mac['id'].str.split('.')]
-        mac['group_pheno'] = ['.'.join(i[1:]) for i in mac['id'].str.split('.')]
-
-        group_phenos = set(mac['group_pheno'])
-
-        meta_mac = list()
-        for gp in group_phenos:
-            combind_n = mac.loc[mac['group_pheno']==gp, 'n'].sum()
-            combind_max_mac = combind_n * 2
-            combined_threshold = params.threshold / combind_max_mac
-            meta_mac.append([gp, combind_n, combind_max_mac, combined_threshold])
-            
-        mac.drop(columns = ['cohort', 'group_pheno'], inplace = True)
-        all_mac = pd.concat([mac, pd.DataFrame(meta_mac, columns = ['id', 'n', 'max_mac', 'maf_threshold'])])
-        all_mac.to_csv(output[0], sep = ' ', index = False, header = True)
+# rule mac:
+#     input: PHENOTYPE_FILE
+#     params:
+#         phenotype=PHENOTYPE,
+#         threshold=config['QC_thresholds']['MAC']
+#     output: 'output/{cohort}/{group}/{phenotype}/{phenotype}.mac.txt'
+#     run:
+#         data = pd.read_csv(input[0], sep = '\t')
+#         n = data.shape[0]
+#         max_mac = n * 2
+#         threshold = params.threshold / max_mac
+#         pd.DataFrame([[params.phenotype, n, max_mac, threshold]]).to_csv(output[0], sep = ' ', index = False, header = False)

@@ -1,6 +1,12 @@
-include: "rules/6. cojo.smk"
+include: "rules/2. single-cohort.smk"
 
 
-rule run_single_point:
-    input: 
-        "output/meta-analysis/cojo/all.jma.cojo.csv.gz"
+rule filter_genotype:
+    input:
+        multiext(f"output/{COHORT}/bfile/{COHORT}", '.bed', '.bim', '.fam')
+
+rule run:
+    input:
+        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/manqq/{PHENOTYPE}.{config['manqq']['maf_filter']}.qq.png",
+        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/peaks/.done"
+
