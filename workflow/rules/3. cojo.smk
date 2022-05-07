@@ -15,14 +15,14 @@ def run_all_cojo_input(w):
         peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
     except pd.errors.EmptyDataError:
         return []
-    peaks = [f'output/{w.cohort}/{group}/{phenotype}/cojo/{phenotype}.{chrom}.{start}.{end}.jma.cojo' for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
+    peaks = [f'output/{w.cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}.jma.cojo' for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
     return peaks
 
 rule run_all_cojo:
     input:
         run_all_cojo_input
     output:
-        "output/{cohort}/{group}/{phenotype}/{phenotype}.jma.cojo.csv.gz"
+        "output/{cohort}/{group}/{phenotype}/all.jma.csv.gz"
     run:
         if len(input)==0: # When no signif signal
             empty = pd.DataFrame(columns = ["group", "phenotype", "peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
@@ -61,9 +61,9 @@ rule make_cojofile:
         samplesize=rules.get_samplesize.output.samplesize
     params:
         bfile=rules.filter_bfile.params.out,
-        prefix="output/{cohort}/{group}/{phenotype}/cojofile/{phenotype}"
+        prefix="output/{cohort}/{group}/{phenotype}/cojofile/cojofile"
     output:
-        "output/{cohort}/{group}/{phenotype}/cojofile/{phenotype}.ma.gz"
+        "output/{cohort}/{group}/{phenotype}/cojofile/cojofile.ma.gz"
     run:
         samplesize = pd.read_csv(input.samplesize,
                                 sep = ' ',
@@ -92,14 +92,14 @@ rule cojo:
     params:
         bfile=rules.filter_bfile.params.out,
         threshold=config['QC_thresholds']['p-value'],
-        prefix="output/{cohort}/{group}/{phenotype}/cojo/{phenotype}.{chrom}.{start}.{end}"
+        prefix="output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}"
     output:
-        multiext("output/{cohort}/{group}/{phenotype}/cojo/{phenotype}.{chrom}.{start}.{end}", 
+        multiext("output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}", 
             ".jma.cojo",
             ".cma.cojo",
             ".ldr.cojo")
     log:
-        "output/{cohort}/{group}/{phenotype}/cojo/{phenotype}.{chrom}.{start}.{end}.cojo.log"
+        "output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}.cojo.log"
     shell:
         """
         workflow/scripts/run_cojo.sh \

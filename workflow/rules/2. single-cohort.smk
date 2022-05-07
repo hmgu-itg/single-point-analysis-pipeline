@@ -12,16 +12,16 @@ rule gcta:
         bfile=rules.filter_bfile.output,
         grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
-        out="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}",
+        out="output/{cohort}/{group}/{phenotype}/gcta/gcta",
         bfile="output/{cohort}/bfile/{cohort}",
         grm=GRM
     output:
-        pheno="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.pheno",
-        mlma=temp("output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma"),
-        mlma_bgz="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma.gz",
-        mlma_bgz_tbi="output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma.gz.tbi"
+        pheno="output/{cohort}/{group}/{phenotype}/gcta/gcta.pheno",
+        mlma=temp("output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma"),
+        mlma_bgz="output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.gz",
+        mlma_bgz_tbi="output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.gz.tbi"
     threads: workflow.cores
-    log: "output/{cohort}/{group}/{phenotype}/gcta/{phenotype}.mlma.log"
+    log: "output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.log"
     shell:
         """
         awk '{{OFS=\"\\t\"}}{{print $1,$1,$2}}' {input.phenotype} > {output.pheno} 2> {log}
@@ -41,18 +41,18 @@ rule gcta:
 rule manqq_gcta:
     input: rules.gcta.output.mlma_bgz
     params:
-        prefix="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}",
+        prefix="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}",
         filter="{filter}"
     resources:
         mem_mb=1000,
         rate_limit=1
     output: 
-        "output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.run_conf",
-        "output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.qq.png",
-        "output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.lambda.txt"
+        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.run_conf",
+        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.qq.png",
+        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.lambda.txt"
     log:
-        out="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.o",
-        err="output/{cohort}/{group}/{phenotype}/manqq/{phenotype}.{filter}.e"
+        out="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.o",
+        err="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.e"
     singularity: config['container']['manqq']
     shell:
         """
@@ -65,7 +65,6 @@ rule manqq_gcta:
           --build 38 \
           --image png \
           --af-col Freq \
-          --no-man \
           --maf-filter {params.filter} \
           {input} \
           {params.prefix} > {log.out} 2> {log.err}
