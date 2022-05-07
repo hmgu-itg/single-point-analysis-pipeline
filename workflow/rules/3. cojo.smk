@@ -22,7 +22,7 @@ rule run_all_cojo:
     input:
         run_all_cojo_input
     output:
-        "output/{cohort}/{group}/{phenotype}/all.jma.csv.gz"
+        "output/{cohort}/{group}/{phenotype}/all.cojo.jma.csv.gz"
     run:
         if len(input)==0: # When no signif signal
             empty = pd.DataFrame(columns = ["group", "phenotype", "peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])

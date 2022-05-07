@@ -8,7 +8,7 @@ rule filter_genotype:
 
 rule run:
     input:
-        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/manqq/{PHENOTYPE}.{config['manqq']['maf_filter']}.qq.png",
+        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png",
         f"output/{COHORT}/{GROUP}/{PHENOTYPE}/peaks/.done",
-        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/{PHENOTYPE}.jma.cojo.csv.gz"
+        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/all.cojo.jma.csv.gz"
 
