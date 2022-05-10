@@ -46,4 +46,4 @@ phenotype_file: ""
 container:
   all: "https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif"
   manqq: "library://hmgu-itg/default/manqq:0.2.3"
-  peakplotter: "library://hmgu-itg/default/peakplotter:0.4.3"
+  peakplotter: "library://hmgu-itg/default/peakplotter:0.4.4"
