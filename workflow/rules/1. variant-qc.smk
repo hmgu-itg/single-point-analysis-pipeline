@@ -22,7 +22,8 @@ rule hwe:
           --memory {resources.mem_mb} \
           --threads {threads} \
           --hardy \
-          --out {params.output}
+          --out {params.output} \
+          --silent
         """
 
 rule exclude_hwe:
@@ -50,7 +51,8 @@ rule missingness:
           --memory {resources.mem_mb} \
           --threads {threads} \
           --missing \
-          --out {params.output}
+          --out {params.output} \
+          --silent
         """
 
 rule exclude_missingness:
@@ -92,7 +94,8 @@ rule filter_bfile:
           --make-bed \
           --out {params.out} \
           --memory {resources.mem_mb} \
-          --threads {threads}
+          --threads {threads} \
+          --silent
         awk -F$'\\t' 'BEGIN{{OFS=\"\\t\"}}{{print $1,\"chr\"$1\":\"$4,$3,$4,$5,$6}}' {params.out}.bim | sponge {params.out}.bim
         """
 
