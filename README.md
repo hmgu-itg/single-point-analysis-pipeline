@@ -49,7 +49,7 @@ you should first process the genotype file which will be shared across all assoc
 ```bash
 snakemake \
     filter_genotype \
-    --profile analyse 
+    --profile analyse \
     --config \
         cohort=MANOLIS \
         bfile=/path/to/cohort-bfile
