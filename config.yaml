@@ -16,7 +16,8 @@ manqq:
 # 1Mb here means the minimum peak window will be 2Mb (1Mb up and downstream)
 peakplotter:
   span: 1000000
-
+  vep_ld: 0.0
+  
 ## Input values
 # You can hard code the values here
 # or provide these values via the commandline
@@ -46,4 +47,4 @@ phenotype_file: ""
 container:
   all: "https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif"
   manqq: "library://hmgu-itg/default/manqq:0.2.4"
-  peakplotter: "library://hmgu-itg/default/peakplotter:0.4.4"
+  peakplotter: "library://hmgu-itg/default/peakplotter:0.5.0"

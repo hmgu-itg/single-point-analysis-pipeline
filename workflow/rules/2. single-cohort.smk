@@ -97,7 +97,8 @@ rule plotpeak:
         outdir="output/{cohort}/{group}/{phenotype}/peaks",
         chrom="{chrom}",
         start="{start}",
-        end="{end}"
+        end="{end}",
+        vep_ld=config['peakplotter']['vep_ld']
     singularity: config['container']['peakplotter']
     resources:
         rate_limit=1
@@ -120,6 +121,7 @@ rule plotpeak:
           --chrom {wildcards.chrom} \
           --start {wildcards.start} \
           --end {wildcards.end} \
+          --vep-ld {params.vep_ld} \
           --debug
         """
 
