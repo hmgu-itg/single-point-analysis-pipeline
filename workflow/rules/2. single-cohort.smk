@@ -56,7 +56,7 @@ rule manqq_gcta:
     singularity: config['container']['manqq']
     shell:
         """
-        run_manqq.R \
+        manqq_cli \
           --chr-col Chr \
           --pval-col p \
           --pos-col bp \
@@ -65,6 +65,8 @@ rule manqq_gcta:
           --build 38 \
           --image png \
           --af-col Freq \
+          --qq-title {wildcards.phenotype} \
+          --manh-title {wildcards.phenotype} \
           --maf-filter {params.filter} \
           {input} \
           {params.prefix} > {log.out} 2> {log.err}
