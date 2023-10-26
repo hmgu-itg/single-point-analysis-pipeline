@@ -14,7 +14,7 @@ rule hwe:
         input=BFILE,
         output="output/{cohort}/bfile/{cohort}"
     threads: workflow.cores * 0.5
-    output: multiext("output/{cohort}/bfile/{cohort}", '.hwe', '.nosex')
+    output: "output/{cohort}/bfile/{cohort}.hwe"
     log: "output/{cohort}/bfile/{cohort}.log"
     shell:
         """
