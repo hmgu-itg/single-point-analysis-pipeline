@@ -1,8 +1,14 @@
 include: "rules/3. cojo.smk"
 
+def run_input(w):
+    runlist = [f"output/{COHORT}/{GROUP}/{PHENOTYPE}/all.cojo.jma.csv.gz"]
+
+    if config['run']['manqq']:
+        runlist.append(f"output/{COHORT}/{GROUP}/{PHENOTYPE}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png")
+    if config['run']['peakplotter']:
+        runlist.append(f"output/{COHORT}/{GROUP}/{PHENOTYPE}/peaks/.done")
+    return runlist
+
 rule run:
     input:
-        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png",
-        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/peaks/.done",
-        f"output/{COHORT}/{GROUP}/{PHENOTYPE}/all.cojo.jma.csv.gz"
-
+        run_input
