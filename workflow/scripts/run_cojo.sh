@@ -23,19 +23,25 @@ assoc_file: $assoc_file
 prefix: $prefix
 ===========================
 "
-# TODO: Find a way to insert the $threshold variable
-# inside the below awk command.
+# TODO: Create unit test to test whether the threshold values are used correctly
+# Determine if the user-defined threshold is less than 1e-6
+effective_threshold=$(echo "$threshold" | awk '{if ($1 < 1e-6) print 1e-6; else print $1}')
 
 # See Plink 1.9's .qassoc file format for more details
 qassoc=$prefix.qassoc
 echo "[$(date), Step 1/4] Creating $qassoc"
 tabix $assoc_file ${chrom}:${start}-${end} | \
-    awk 'BEGIN{OFS="\t";print "CHR\tSNP\tBP\tBETA\tSE\tR2\tT\tP"} \
-      {
-        split($9, a, "[eE]") 
-        if($9<1e-6 || (length(a)>1 && a[2] < -6)){
-          print $1, $2, $3, $7, $8, 1, 1, $9}
-      }' > $qassoc
+awk -v threshold_val="$effective_threshold" 'BEGIN{OFS="\t";print "CHR\tSNP\tBP\tBETA\tSE\tR2\tT\tP"}
+{
+    # Determine if $9 is in scientific notation and extract its exponent
+    split($9, a, "[eE]") 
+    num_exp = (length(a) > 1) ? a[2] : log($9)/log(10)
+    threshold_exp = log(threshold_val)/log(10)
+
+    # Check if $9 is less than the effective threshold
+    if($9<threshold_val || num_exp < threshold_exp){
+        print $1, $2, $3, $7, $8, 1, 1, $9}
+}' > $qassoc
 
 
 echo
