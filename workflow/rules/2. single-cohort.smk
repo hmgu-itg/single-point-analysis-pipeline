@@ -3,13 +3,13 @@ Snakefile 1.
 
 Run association and create QQ-plot and PeakPlotter plot.
 """
-include: "1. variant-qc.smk"
+include: "0. read-config.smk"
 
         
 rule gcta:
     input:
         phenotype=PHENOTYPE_FILE,
-        bfile=rules.filter_bfile.output,
+        bfile=BFILE,
         grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
         out="output/{cohort}/{group}/{phenotype}/gcta/gcta",
@@ -44,7 +44,6 @@ rule manqq_gcta:
         prefix="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}",
         filter="{filter}"
     resources:
-        mem_mb=1000,
         rate_limit=1
     output: 
         "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.run_conf",
@@ -91,9 +90,9 @@ checkpoint detect_peaks:
 rule plotpeak:
     input:
         assoc=rules.gcta.output.mlma_bgz,
-        bfile=rules.filter_bfile.output
+        bfile=BFILE_INPUTS
     params:
-        bfile=rules.filter_bfile.params.out,
+        bfile=BFILE,
         outdir="output/{cohort}/{group}/{phenotype}/peaks",
         chrom="{chrom}",
         start="{start}",

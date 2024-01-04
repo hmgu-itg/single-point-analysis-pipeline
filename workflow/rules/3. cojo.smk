@@ -59,9 +59,9 @@ rule make_cojofile:
     input:
         assoc=rules.gcta.output.mlma_bgz,
         samplesize=rules.get_samplesize.output.samplesize
-    params:
-        bfile=rules.filter_bfile.params.out,
-        prefix="output/{cohort}/{group}/{phenotype}/cojofile/cojofile"
+    # params:
+    #     bfile=BFILE,
+    #     prefix="output/{cohort}/{group}/{phenotype}/cojofile/cojofile"
     output:
         "output/{cohort}/{group}/{phenotype}/cojofile/cojofile.ma.gz"
     run:
@@ -86,11 +86,11 @@ rule make_cojofile:
 
 rule cojo:
     input:
-        bfiles=rules.filter_bfile.output,
+        bfiles=BFILE_INPUTS,
         cojofile=rules.make_cojofile.output,
         assoc=rules.gcta.output.mlma_bgz
     params:
-        bfile=rules.filter_bfile.params.out,
+        bfile=BFILE,
         threshold=config['QC_thresholds']['p-value'],
         prefix="output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}"
     output:
