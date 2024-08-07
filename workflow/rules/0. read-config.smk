@@ -11,6 +11,7 @@ configfile: "config.yaml"
 COHORT = config['cohort']
 GROUP = config['group']
 BFILE = config['bfile']
+BFILE_INPUTS = multiext(BFILE, '.bed', '.bim', '.fam')
 GRM = config['grm']
 PHENOTYPE = config['phenotype']
 PHENOTYPE_FILE = config['phenotype_file']

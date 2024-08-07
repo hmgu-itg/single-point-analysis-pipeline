@@ -45,6 +45,39 @@ rule run_all_cojo:
         pd.concat(concat_list).to_csv(output[0], index = False, header = True, compression = 'gzip')
 
 
+
+rule get_samplesize:
+    '''
+    This file is used later when creating the cojofile.
+    
+    Warning:
+    The awk command was only tested in mawk (1.3.4 20200120). 
+    This awk command may not work as intended using other type of awk (original awk, gawk)!
+    '''
+    input:
+        BFILE_INPUTS
+    params:
+        input=BFILE,
+        output='output/{cohort}/{cohort}.miss'
+    threads: workflow.cores
+    output:
+        lmiss=temp('output/{cohort}/{cohort}.miss.lmiss'),
+        imiss=temp('output/{cohort}/{cohort}.miss.imiss'),
+        samplesize='output/{cohort}/{cohort}.samplesize'
+    shell: """
+        plink \
+          --bfile {params.input} \
+          --memory {resources.mem_mb} \
+          --threads {threads} \
+          --missing \
+          --out {params.output} \
+          --silent
+
+        awk -F '[[:space:]]+' '{{if(NR!=1){{print $3, $5-$4}}}}' {output.lmiss} > {output.samplesize}
+        """
+
+
+
 rule make_cojofile:
     '''
     Creates cojofile from bfile and assoc file.
@@ -91,7 +124,7 @@ rule cojo:
         assoc=rules.gcta.output.mlma_bgz
     params:
         bfile=BFILE,
-        threshold=config['QC_thresholds']['p-value'],
+        threshold=config['p-value'],
         prefix="output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}"
     output:
         multiext("output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}", 

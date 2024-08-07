@@ -77,7 +77,7 @@ checkpoint detect_peaks:
         rules.gcta.output.mlma_bgz
     params:
         span=config['peakplotter']['span'],
-        signif=config['QC_thresholds']['p-value']
+        signif=config['p-value']
     output:
         "output/{cohort}/{group}/{phenotype}/peaklist"
     log:
