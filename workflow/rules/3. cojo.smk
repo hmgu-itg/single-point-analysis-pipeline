@@ -9,6 +9,8 @@ $ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules
 """
 include: "2. single-cohort.smk"
 
+import pandas as pd
+
 def run_all_cojo_input(w):
     peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
     try:
@@ -36,7 +38,6 @@ rule run_all_cojo:
             peak = f.split('/')[-1].replace(f'{string}.', '').replace('.jma.cojo', '')
             df = pd.read_csv(f, sep = '\t', header = 0)
             min_p = df['p'].min()
-            df['is cojo tophit'] = False
             df.loc[df['p'] == min_p, 'cojo_tophit'] = True
             df.insert(0, 'group', wildcards.group)
             df.insert(1, 'phenotype', wildcards.phenotype)

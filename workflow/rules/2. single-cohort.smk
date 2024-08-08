@@ -4,16 +4,16 @@ Snakefile 1.
 Run association and create QQ-plot and PeakPlotter plot.
 """
 include: "0. read-config.smk"
+container: config['container']['all']
 
-        
 rule gcta:
     input:
         phenotype=PHENOTYPE_FILE,
-        bfile=BFILE,
+        bfile=BFILE_INPUTS,
         grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
         out="output/{cohort}/{group}/{phenotype}/gcta/gcta",
-        bfile="output/{cohort}/bfile/{cohort}",
+        bfile=BFILE,
         grm=GRM
     output:
         pheno="output/{cohort}/{group}/{phenotype}/gcta/gcta.pheno",
