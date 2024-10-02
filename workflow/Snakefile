@@ -4,7 +4,7 @@ def run_input(w):
     runlist = ["{output}/all.cojo.jma.csv.gz"]
 
     if config['run']['manqq']:
-        runlist.append("{output}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png")
+        runlist.append(f"{{output}}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png")
     if config['run']['peakplotter']:
         runlist.append("{output}/peaks/.done")
     return runlist
