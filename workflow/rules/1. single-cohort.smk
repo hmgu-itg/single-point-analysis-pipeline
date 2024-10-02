@@ -12,16 +12,16 @@ rule gcta:
         bfile=BFILE_INPUTS,
         grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
-        out=f"{OUTPUT_PATH}/gcta/gcta",
+        out="{output}/gcta/gcta",
         bfile=BFILE,
         grm=GRM
     output:
-        pheno=f"{OUTPUT_PATH}/gcta/gcta.pheno",
-        mlma=temp(f"{OUTPUT_PATH}/gcta/gcta.mlma"),
-        mlma_bgz=f"{OUTPUT_PATH}/gcta/gcta.mlma.gz",
-        mlma_bgz_tbi=f"{OUTPUT_PATH}/gcta/gcta.mlma.gz.tbi"
+        pheno="{output}/gcta/gcta.pheno",
+        mlma=temp("{output}/gcta/gcta.mlma"),
+        mlma_bgz="{output}/gcta/gcta.mlma.gz",
+        mlma_bgz_tbi="{output}/gcta/gcta.mlma.gz.tbi"
     threads: workflow.cores
-    log: f"{OUTPUT_PATH}/gcta/gcta.mlma.log"
+    log: "{output}/gcta/gcta.mlma.log"
     shell:
         """
         awk '{{OFS=\"\\t\"}}{{print $1,$1,$2}}' {input.phenotype} > {output.pheno} 2> {log}
@@ -41,17 +41,16 @@ rule gcta:
 rule manqq_gcta:
     input: rules.gcta.output.mlma_bgz
     params:
-        prefix=f"{OUTPUT_PATH}/manqq/manqq.{{filter}}",
-        filter="{filter}"
+        prefix="{output}/manqq/manqq.{filter}"
     resources:
         rate_limit=1
     output: 
-        f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.run_conf",
-        f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.qq.png",
-        f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.lambda.txt"
+        "{output}/manqq/manqq.{filter}.run_conf",
+        "{output}/manqq/manqq.{filter}.qq.png",
+        "{output}/manqq/manqq.{filter}.lambda.txt"
     log:
-        out=f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.o",
-        err=f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.e"
+        out="{output}/manqq/manqq.{filter}.o",
+        err="{output}/manqq/manqq.{filter}.e"
     singularity: config['container']['manqq']
     shell:
         """
@@ -66,7 +65,7 @@ rule manqq_gcta:
           --af-col Freq \
           --qq-title {wildcards.phenotype} \
           --manh-title {wildcards.phenotype} \
-          --maf-filter {params.filter} \
+          --maf-filter {wildcards.filter} \
           {input} \
           {params.prefix} > {log.out} 2> {log.err}
         """
@@ -79,9 +78,9 @@ checkpoint detect_peaks:
         span=config['peakplotter']['span'],
         signif=config['p-value']
     output:
-        f"{OUTPUT_PATH}/peaklist"
+        "{output}/peaklist"
     log:
-        f"{OUTPUT_PATH}/peaklist.log"
+        "{output}/peaklist.log"
     singularity: config['container']['peakplotter']
     shell:
         "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {wildcards.group} {wildcards.phenotype} {output} 2>&1 > {log}"
@@ -93,7 +92,7 @@ rule plotpeak:
         bfile=BFILE_INPUTS
     params:
         bfile=BFILE,
-        outdir=f"{OUTPUT_PATH}/peaks",
+        outdir="{output}/peaks",
         chrom="{chrom}",
         start="{start}",
         end="{end}",
@@ -102,7 +101,7 @@ rule plotpeak:
     resources:
         rate_limit=1
     output:
-        multiext(f"{OUTPUT_PATH}/peaks/{{chrom}}.{{start}}.{{end}}.500kb", '.html', '.csv')
+        multiext("{output}/peaks/{chrom}.{start}.{end}.500kb", '.html', '.csv')
     shell:
         """
         peakplotter-region  \
@@ -138,4 +137,4 @@ rule plot_all_peaks:
     input:
         plot_all_peaks_input
     output:
-        touch(f"{OUTPUT_PATH}/peaks/.done")
+        touch("{output}/peaks/.done")

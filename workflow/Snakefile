@@ -1,12 +1,12 @@
 include: "rules/2. cojo.smk"
 
 def run_input(w):
-    runlist = [f"{OUTPUT_PATH}/all.cojo.jma.csv.gz"]
+    runlist = ["{output}/all.cojo.jma.csv.gz"]
 
     if config['run']['manqq']:
-        runlist.append(f"{OUTPUT_PATH}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png")
+        runlist.append("{output}/manqq/manqq.{config['manqq']['maf_filter']}.qq.png")
     if config['run']['peakplotter']:
-        runlist.append(f"{OUTPUT_PATH}/peaks/.done")
+        runlist.append("{output}/peaks/.done")
     return runlist
 
 rule run:

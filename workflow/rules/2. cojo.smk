@@ -24,7 +24,7 @@ rule run_all_cojo:
     input:
         run_all_cojo_input
     output:
-        f"{OUTPUT_PATH}/all.cojo.jma.csv.gz"
+        "{output}/all.cojo.jma.csv.gz"
     run:
         if len(input)==0: # When no signif signal
             empty = pd.DataFrame(columns = ["group", "phenotype", "peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
@@ -39,9 +39,7 @@ rule run_all_cojo:
             df = pd.read_csv(f, sep = '\t', header = 0)
             min_p = df['p'].min()
             df.loc[df['p'] == min_p, 'cojo_tophit'] = True
-            df.insert(0, 'group', wildcards.group)
-            df.insert(1, 'phenotype', wildcards.phenotype)
-            df.insert(2, 'peak', peak)
+            df.insert(0, 'peak', peak)
             concat_list.append(df)
         pd.concat(concat_list).to_csv(output[0], index = False, header = True, compression = 'gzip')
 
@@ -86,7 +84,7 @@ rule get_samplesize:
     input:
         lmiss=LMISS
     output:
-        samplesize=f"{OUTPUT_PATH}/samplesize.txt"
+        samplesize="{output}/samplesize.txt"
     shell: """
         awk -F '[[:space:]]+' '{{if(NR!=1){{print $3, $5-$4}}}}' {input.lmiss} > {output.samplesize}
     """
@@ -109,7 +107,7 @@ rule make_cojofile:
     #     bfile=BFILE,
     #     prefix=f"{OUTPUT_PATH}/cojofile/cojofile"
     output:
-        f"{OUTPUT_PATH}/cojofile/cojofile.ma.gz"
+        "{output}/cojofile/cojofile.ma.gz"
     run:
         samplesize = pd.read_csv(input.samplesize,
                                 sep = ' ',
@@ -138,14 +136,14 @@ rule cojo:
     params:
         bfile=BFILE,
         threshold=config['p-value'],
-        prefix=f"{OUTPUT_PATH}/cojo/{{chrom}}.{{start}}.{{end}}"
+        prefix="{output}/cojo/{chrom}.{start}.{end}"
     output:
-        multiext(f"{OUTPUT_PATH}/cojo/{{chrom}}.{{start}}.{{end}}", 
+        multiext("{output}/cojo/{chrom}.{start}.{end}", 
             ".jma.cojo",
             ".cma.cojo",
             ".ldr.cojo")
     log:
-        f"{OUTPUT_PATH}/cojo/{{chrom}}.{{start}}.{{end}}.cojo.log"
+        "{output}/cojo/{chrom}.{start}.{end}.cojo.log"
     shell:
         """
         workflow/scripts/run_cojo.sh \

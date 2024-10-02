@@ -20,9 +20,6 @@ grm: ""
 # Path to phenotype file
 phenotype_file: ""
 
-# Path where the outputs will be generated
-output_path: "./output"
-
 # Significance threshold
 p-value: !!float 5e-8
 
