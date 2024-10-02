@@ -12,12 +12,12 @@ include: "1. single-cohort.smk"
 import pandas as pd
 
 def run_all_cojo_input(w):
-    peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
+    peaklist = checkpoints.detect_peaks.get().output[0]
     try:
         peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
     except pd.errors.EmptyDataError:
         return []
-    peaks = [f'output/{w.cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}.jma.cojo' for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
+    peaks = [f'{{output}}/cojo/{chrom}.{start}.{end}.jma.cojo' for _, (chrom, start, end) in peaklist.iterrows()]
     return peaks
 
 rule run_all_cojo:
@@ -27,7 +27,7 @@ rule run_all_cojo:
         "{output}/all.cojo.jma.csv.gz"
     run:
         if len(input)==0: # When no signif signal
-            empty = pd.DataFrame(columns = ["group", "phenotype", "peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
+            empty = pd.DataFrame(columns = ["peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
             empty.to_csv(output[0], index = False, header = True, compression = 'gzip')
             return
 
@@ -82,7 +82,7 @@ rule get_samplesize:
     This awk command may not work as intended using other type of awk (original awk, gawk)!
     '''
     input:
-        lmiss=LMISS
+        lmiss=config['lmiss']
     output:
         samplesize="{output}/samplesize.txt"
     shell: """
@@ -103,9 +103,6 @@ rule make_cojofile:
     input:
         assoc=rules.gcta.output.mlma_bgz,
         samplesize=rules.get_samplesize.output.samplesize
-    # params:
-    #     bfile=BFILE,
-    #     prefix=f"{OUTPUT_PATH}/cojofile/cojofile"
     output:
         "{output}/cojofile/cojofile.ma.gz"
     run:
@@ -130,11 +127,11 @@ rule make_cojofile:
 
 rule cojo:
     input:
-        bfiles=BFILE_INPUTS,
+        bfiles=multiext(config['bfile'], '.bed', '.bim', '.fam'),
         cojofile=rules.make_cojofile.output,
         assoc=rules.gcta.output.mlma_bgz
     params:
-        bfile=BFILE,
+        bfile=config['bfile'],
         threshold=config['p-value'],
         prefix="{output}/cojo/{chrom}.{start}.{end}"
     output:

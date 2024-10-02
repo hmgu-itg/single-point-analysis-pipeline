@@ -3,18 +3,19 @@ Snakefile 1.
 
 Run association and create QQ-plot and PeakPlotter plot.
 """
-include: "0. read-config.smk"
+configfile: "config.yaml"
 container: config['container']['all']
+
 
 rule gcta:
     input:
         phenotype=PHENOTYPE_FILE,
-        bfile=BFILE_INPUTS,
-        grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
+        bfile=multiext(config['bfile'], '.bed', '.bim', '.fam'),
+        grm=multiext(config['grm'], '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
         out="{output}/gcta/gcta",
-        bfile=BFILE,
-        grm=GRM
+        bfile=config['bfile'],
+        grm=config['grm']
     output:
         pheno="{output}/gcta/gcta.pheno",
         mlma=temp("{output}/gcta/gcta.mlma"),
@@ -89,9 +90,9 @@ checkpoint detect_peaks:
 rule plotpeak:
     input:
         assoc=rules.gcta.output.mlma_bgz,
-        bfile=BFILE_INPUTS
+        bfile=multiext(config['bfile'], '.bed', '.bim', '.fam')
     params:
-        bfile=BFILE,
+        bfile=config['bfile'],
         outdir="{output}/peaks",
         chrom="{chrom}",
         start="{start}",
