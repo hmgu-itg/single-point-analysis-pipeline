@@ -51,19 +51,18 @@ Examine the following two configuration files:
 The `config.yaml` file is used to configure the can be modified to is where the user can define configuration values which will affect the overall result of the analysis. The `analyse.config.yaml` is a [snakemake configuration profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) for running the workflow. Modify the values here based on your server resource availability.
 
 ## Running the pipeline
-To run the pipeline, you must specify the `bfile`, `grm`, `lmiss`, `phenotype_file`, and `output_path` configuration values either in the `config.yaml` file or using the `--config` option (See [Snakemake Configuration](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html)).
+To run the pipeline, you must specify the `bfile`, `grm`, `lmiss`, and `phenotype_file` configuration values either in the `config.yaml` file or using the `--config` option (See [Snakemake Configuration](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html)).
 
 For example, running one association analysis using the `--config` option:
 ```bash
 snakemake \
-    run \
     --profile analyse \
     --config \
         bfile=/path/to/cohort-bfile \
         lmiss=/path/to/cohort-bfile.lmiss \
         grm=/path/to/GCTA-grm \
         phenotype_file=/path/to/phenotype_file.txt \
-        output_path=./output
+    output/done
 ```
 
 ## Running the pipeline for multiple phenotypes
