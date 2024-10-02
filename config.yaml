@@ -8,24 +8,20 @@ run:
 # or provide these values via the commandline
 # as suggested in the README.
 
-# Cohort name
-cohort: ""
-
 # Path to cohort's plink bfile prefix
 bfile: ""
+
+# Path to cohort's plink .lmiss file
+lmiss: ""
 
 # Path to cohort's genetic relatedness matrix
 grm: ""
 
-# Group name
-group: ""
-
-# Phenotype name
-phenotype: ""
-
 # Path to phenotype file
 phenotype_file: ""
 
+# Path where the outputs will be generated
+output_path: "./output"
 
 # Significance threshold
 p-value: !!float 5e-8

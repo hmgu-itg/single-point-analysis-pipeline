@@ -12,16 +12,16 @@ rule gcta:
         bfile=BFILE_INPUTS,
         grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
-        out="output/{cohort}/{group}/{phenotype}/gcta/gcta",
+        out=f"{OUTPUT_PATH}/gcta/gcta",
         bfile=BFILE,
         grm=GRM
     output:
-        pheno="output/{cohort}/{group}/{phenotype}/gcta/gcta.pheno",
-        mlma=temp("output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma"),
-        mlma_bgz="output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.gz",
-        mlma_bgz_tbi="output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.gz.tbi"
+        pheno=f"{OUTPUT_PATH}/gcta/gcta.pheno",
+        mlma=temp(f"{OUTPUT_PATH}/gcta/gcta.mlma"),
+        mlma_bgz=f"{OUTPUT_PATH}/gcta/gcta.mlma.gz",
+        mlma_bgz_tbi=f"{OUTPUT_PATH}/gcta/gcta.mlma.gz.tbi"
     threads: workflow.cores
-    log: "output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.log"
+    log: f"{OUTPUT_PATH}/gcta/gcta.mlma.log"
     shell:
         """
         awk '{{OFS=\"\\t\"}}{{print $1,$1,$2}}' {input.phenotype} > {output.pheno} 2> {log}
@@ -41,17 +41,17 @@ rule gcta:
 rule manqq_gcta:
     input: rules.gcta.output.mlma_bgz
     params:
-        prefix="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}",
+        prefix=f"{OUTPUT_PATH}/manqq/manqq.{{filter}}",
         filter="{filter}"
     resources:
         rate_limit=1
     output: 
-        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.run_conf",
-        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.qq.png",
-        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.lambda.txt"
+        f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.run_conf",
+        f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.qq.png",
+        f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.lambda.txt"
     log:
-        out="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.o",
-        err="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.e"
+        out=f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.o",
+        err=f"{OUTPUT_PATH}/manqq/manqq.{{filter}}.e"
     singularity: config['container']['manqq']
     shell:
         """
@@ -79,9 +79,9 @@ checkpoint detect_peaks:
         span=config['peakplotter']['span'],
         signif=config['p-value']
     output:
-        "output/{cohort}/{group}/{phenotype}/peaklist"
+        f"{OUTPUT_PATH}/peaklist"
     log:
-        "output/{cohort}/{group}/{phenotype}/peaklist.log"
+        f"{OUTPUT_PATH}/peaklist.log"
     singularity: config['container']['peakplotter']
     shell:
         "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {wildcards.group} {wildcards.phenotype} {output} 2>&1 > {log}"
@@ -93,7 +93,7 @@ rule plotpeak:
         bfile=BFILE_INPUTS
     params:
         bfile=BFILE,
-        outdir="output/{cohort}/{group}/{phenotype}/peaks",
+        outdir=f"{OUTPUT_PATH}/peaks",
         chrom="{chrom}",
         start="{start}",
         end="{end}",
@@ -102,7 +102,7 @@ rule plotpeak:
     resources:
         rate_limit=1
     output:
-        multiext("output/{cohort}/{group}/{phenotype}/peaks/{chrom}.{start}.{end}.500kb", '.html', '.csv')
+        multiext(f"{OUTPUT_PATH}/peaks/{{chrom}}.{{start}}.{{end}}.500kb", '.html', '.csv')
     shell:
         """
         peakplotter-region  \
@@ -126,16 +126,16 @@ rule plotpeak:
 
 
 def plot_all_peaks_input(w):
-    peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
+    peaklist = checkpoints.detect_peaks.get().output[0]
     try:
         peaklist = pd.read_csv(peaklist, sep = '\t', header = None)
     except pd.errors.EmptyDataError:
         return []
-    return [rules.plotpeak.output[0].format(cohort=w.cohort, group=group, phenotype=phenotype, chrom=chrom, start=start, end=end)
+    return [rules.plotpeak.output[0].format(chrom=chrom, start=start, end=end)
             for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
 
 rule plot_all_peaks:
     input:
         plot_all_peaks_input
     output:
-        touch("output/{cohort}/{group}/{phenotype}/peaks/.done")
+        touch(f"{OUTPUT_PATH}/peaks/.done")
