@@ -12,9 +12,9 @@ include: "1. single-cohort.smk"
 import pandas as pd
 
 def run_all_cojo_input(w):
-    peaklist = checkpoints.detect_peaks.get().output[0]
+    peaklist = checkpoints.detect_peaks.get(output=w.output).output[0]
     try:
-        peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
+        peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['chrom', 'start', 'end'])
     except pd.errors.EmptyDataError:
         return []
     peaks = [f'{{output}}/cojo/{chrom}.{start}.{end}.jma.cojo' for _, (chrom, start, end) in peaklist.iterrows()]
