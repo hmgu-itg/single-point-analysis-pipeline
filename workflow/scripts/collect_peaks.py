@@ -12,9 +12,7 @@ from peakplotter.test_utils import get_test_logger
 assocfile = sys.argv[1]
 flank_bp = int(sys.argv[2])
 signif = float(sys.argv[3])
-group = sys.argv[4]
-phenotype = sys.argv[5]
-output = sys.argv[6]
+output = sys.argv[4]
 
 
 chr_col = 'Chr'
@@ -54,6 +52,4 @@ peak_collections.merge()
 print('peak_collections after merge')
 print(peak_collections)
 peaked = peak_collections.data
-peaked.insert(0, 'phenotype', phenotype)
-peaked.insert(0, 'group', group)
 peaked.to_csv(output, sep = '\t', header = False, index = False)

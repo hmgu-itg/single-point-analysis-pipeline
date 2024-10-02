@@ -84,7 +84,7 @@ checkpoint detect_peaks:
         "{output}/peaklist.log"
     singularity: config['container']['peakplotter']
     shell:
-        "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {wildcards.group} {wildcards.phenotype} {output} 2>&1 > {log}"
+        "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {output} 2>&1 > {log}"
 
 
 rule plotpeak:
