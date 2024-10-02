@@ -9,7 +9,7 @@ container: config['container']['all']
 
 rule gcta:
     input:
-        phenotype=PHENOTYPE_FILE,
+        phenotype=config['phenotype_file'],
         bfile=multiext(config['bfile'], '.bed', '.bim', '.fam'),
         grm=multiext(config['grm'], '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
