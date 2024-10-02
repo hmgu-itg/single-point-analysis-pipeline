@@ -64,8 +64,6 @@ rule manqq_gcta:
           --build 38 \
           --image png \
           --af-col Freq \
-          --qq-title {wildcards.phenotype} \
-          --manh-title {wildcards.phenotype} \
           --maf-filter {wildcards.filter} \
           {input} \
           {params.prefix} > {log.out} 2> {log.err}
@@ -94,9 +92,6 @@ rule plotpeak:
     params:
         bfile=config['bfile'],
         outdir="{output}/peaks",
-        chrom="{chrom}",
-        start="{start}",
-        end="{end}",
         vep_ld=config['peakplotter']['vep_ld']
     singularity: config['container']['peakplotter']
     resources:
@@ -126,13 +121,13 @@ rule plotpeak:
 
 
 def plot_all_peaks_input(w):
-    peaklist = checkpoints.detect_peaks.get().output[0]
+    peaklist = checkpoints.detect_peaks.get(output=w.output).output[0]
     try:
         peaklist = pd.read_csv(peaklist, sep = '\t', header = None)
     except pd.errors.EmptyDataError:
         return []
-    return [rules.plotpeak.output[0].format(chrom=chrom, start=start, end=end)
-            for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
+    return [rules.plotpeak.output[0].format(output=w.output, chrom=chrom, start=start, end=end)
+            for _, (chrom, start, end) in peaklist.iterrows()]
 
 rule plot_all_peaks:
     input:

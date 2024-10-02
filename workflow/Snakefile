@@ -12,3 +12,5 @@ def run_input(w):
 rule run:
     input:
         run_input
+    output:
+        touch("{output}/done")
