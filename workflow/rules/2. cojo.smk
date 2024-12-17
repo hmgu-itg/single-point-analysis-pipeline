@@ -7,27 +7,27 @@ Example
 $ snakemake --cores 10 --keep-going --use-singularity --snakefile workflow/rules/cojo.smk run_all_cojo
 
 """
-include: "2. single-cohort.smk"
+include: "1. single-cohort.smk"
 
 import pandas as pd
 
 def run_all_cojo_input(w):
-    peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
+    peaklist = checkpoints.detect_peaks.get(output=w.output).output[0]
     try:
-        peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['group', 'phenotype', 'chrom', 'start', 'end'])
+        peaklist = pd.read_csv(peaklist, sep = '\t', header = None, names = ['chrom', 'start', 'end'])
     except pd.errors.EmptyDataError:
         return []
-    peaks = [f'output/{w.cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}.jma.cojo' for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
+    peaks = [f'{{output}}/cojo/{chrom}.{start}.{end}.jma.cojo' for _, (chrom, start, end) in peaklist.iterrows()]
     return peaks
 
 rule run_all_cojo:
     input:
         run_all_cojo_input
     output:
-        "output/{cohort}/{group}/{phenotype}/all.cojo.jma.csv.gz"
+        "{output}/all.cojo.jma.csv.gz"
     run:
         if len(input)==0: # When no signif signal
-            empty = pd.DataFrame(columns = ["group", "phenotype", "peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
+            empty = pd.DataFrame(columns = ["peak", "Chr", "SNP", "bp", "refA", "freq", "b", "se", "p", "n", "freq_geno", "bJ", "bJ_se", "pJ", "LD_r", "cojo_tophit"])
             empty.to_csv(output[0], index = False, header = True, compression = 'gzip')
             return
 
@@ -39,45 +39,55 @@ rule run_all_cojo:
             df = pd.read_csv(f, sep = '\t', header = 0)
             min_p = df['p'].min()
             df.loc[df['p'] == min_p, 'cojo_tophit'] = True
-            df.insert(0, 'group', wildcards.group)
-            df.insert(1, 'phenotype', wildcards.phenotype)
-            df.insert(2, 'peak', peak)
+            df.insert(0, 'peak', peak)
             concat_list.append(df)
         pd.concat(concat_list).to_csv(output[0], index = False, header = True, compression = 'gzip')
 
 
+# rule get_samplesize:
+#     '''
+#     This file is used when creating the cojofile.    
+#     Warning:
+#     The awk command was only tested in mawk (1.3.4 20200120). 
+#     This awk command may not work as intended using other type of awk (original awk, gawk)!
+#     '''
+#     input:
+#         BFILE_INPUTS
+#     params:
+#         input=BFILE,
+#         output='output/{cohort}/{cohort}.miss'
+#     threads: workflow.cores
+#     output:
+#         lmiss=temp('output/{cohort}/{cohort}.miss.lmiss'),
+#         imiss=temp('output/{cohort}/{cohort}.miss.imiss'),
+#         samplesize='output/{cohort}/{cohort}.samplesize'
+#     shell: """
+#         plink \
+#           --bfile {params.input} \
+#           --memory {resources.mem_mb} \
+#           --threads {threads} \
+#           --missing \
+#           --out {params.output} \
+#           --silent
+
+#         awk -F '[[:space:]]+' '{{if(NR!=1){{print $3, $5-$4}}}}' {output.lmiss} > {output.samplesize}
+#         """
+
 
 rule get_samplesize:
     '''
-    This file is used later when creating the cojofile.
-    
+    This file is used when creating the cojofile.    
     Warning:
     The awk command was only tested in mawk (1.3.4 20200120). 
     This awk command may not work as intended using other type of awk (original awk, gawk)!
     '''
     input:
-        BFILE_INPUTS
-    params:
-        input=BFILE,
-        output='output/{cohort}/{cohort}.miss'
-    threads: workflow.cores
+        lmiss=config['lmiss']
     output:
-        lmiss=temp('output/{cohort}/{cohort}.miss.lmiss'),
-        imiss=temp('output/{cohort}/{cohort}.miss.imiss'),
-        samplesize='output/{cohort}/{cohort}.samplesize'
+        samplesize="{output}/samplesize.txt"
     shell: """
-        plink \
-          --bfile {params.input} \
-          --memory {resources.mem_mb} \
-          --threads {threads} \
-          --missing \
-          --out {params.output} \
-          --silent
-
-        awk -F '[[:space:]]+' '{{if(NR!=1){{print $3, $5-$4}}}}' {output.lmiss} > {output.samplesize}
-        """
-
-
+        awk -F '[[:space:]]+' '{{if(NR!=1){{print $3, $5-$4}}}}' {input.lmiss} > {output.samplesize}
+    """
 
 rule make_cojofile:
     '''
@@ -93,11 +103,8 @@ rule make_cojofile:
     input:
         assoc=rules.gcta.output.mlma_bgz,
         samplesize=rules.get_samplesize.output.samplesize
-    # params:
-    #     bfile=BFILE,
-    #     prefix="output/{cohort}/{group}/{phenotype}/cojofile/cojofile"
     output:
-        "output/{cohort}/{group}/{phenotype}/cojofile/cojofile.ma.gz"
+        "{output}/cojofile/cojofile.ma.gz"
     run:
         samplesize = pd.read_csv(input.samplesize,
                                 sep = ' ',
@@ -120,20 +127,20 @@ rule make_cojofile:
 
 rule cojo:
     input:
-        bfiles=BFILE_INPUTS,
+        bfiles=multiext(config['bfile'], '.bed', '.bim', '.fam'),
         cojofile=rules.make_cojofile.output,
         assoc=rules.gcta.output.mlma_bgz
     params:
-        bfile=BFILE,
+        bfile=config['bfile'],
         threshold=config['p-value'],
-        prefix="output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}"
+        prefix="{output}/cojo/{chrom}.{start}.{end}"
     output:
-        multiext("output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}", 
+        multiext("{output}/cojo/{chrom}.{start}.{end}", 
             ".jma.cojo",
             ".cma.cojo",
             ".ldr.cojo")
     log:
-        "output/{cohort}/{group}/{phenotype}/cojo/{chrom}.{start}.{end}.cojo.log"
+        "{output}/cojo/{chrom}.{start}.{end}.cojo.log"
     shell:
         """
         workflow/scripts/run_cojo.sh \

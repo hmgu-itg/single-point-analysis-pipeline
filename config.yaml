@@ -8,24 +8,17 @@ run:
 # or provide these values via the commandline
 # as suggested in the README.
 
-# Cohort name
-cohort: ""
-
 # Path to cohort's plink bfile prefix
 bfile: ""
+
+# Path to cohort's plink .lmiss file
+lmiss: ""
 
 # Path to cohort's genetic relatedness matrix
 grm: ""
 
-# Group name
-group: ""
-
-# Phenotype name
-phenotype: ""
-
 # Path to phenotype file
 phenotype_file: ""
-
 
 # Significance threshold
 p-value: !!float 5e-8
@@ -45,4 +38,4 @@ peakplotter:
 container:
   all: "https://github.com/hmgu-itg/single-point-analysis-pipeline/releases/download/0.0.1/hmgu-itg-single-point-analysis-pipeline.latest.sif"
   manqq: "library://hmgu-itg/default/manqq:0.2.4"
-  peakplotter: "library://hmgu-itg/default/peakplotter:0.6.0"
+  peakplotter: "library://hmgu-itg/default/peakplotter:0.7.0"

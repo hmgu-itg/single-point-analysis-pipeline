@@ -3,25 +3,26 @@ Snakefile 1.
 
 Run association and create QQ-plot and PeakPlotter plot.
 """
-include: "0. read-config.smk"
+configfile: "config.yaml"
 container: config['container']['all']
+
 
 rule gcta:
     input:
-        phenotype=PHENOTYPE_FILE,
-        bfile=BFILE_INPUTS,
-        grm=multiext(GRM, '.grm.bin', '.grm.id', '.grm.N.bin')
+        phenotype=config['phenotype_file'],
+        bfile=multiext(config['bfile'], '.bed', '.bim', '.fam'),
+        grm=multiext(config['grm'], '.grm.bin', '.grm.id', '.grm.N.bin')
     params:
-        out="output/{cohort}/{group}/{phenotype}/gcta/gcta",
-        bfile=BFILE,
-        grm=GRM
+        out="{output}/gcta/gcta",
+        bfile=config['bfile'],
+        grm=config['grm']
     output:
-        pheno="output/{cohort}/{group}/{phenotype}/gcta/gcta.pheno",
-        mlma=temp("output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma"),
-        mlma_bgz="output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.gz",
-        mlma_bgz_tbi="output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.gz.tbi"
+        pheno="{output}/gcta/gcta.pheno",
+        mlma=temp("{output}/gcta/gcta.mlma"),
+        mlma_bgz="{output}/gcta/gcta.mlma.gz",
+        mlma_bgz_tbi="{output}/gcta/gcta.mlma.gz.tbi"
     threads: workflow.cores
-    log: "output/{cohort}/{group}/{phenotype}/gcta/gcta.mlma.log"
+    log: "{output}/gcta/gcta.mlma.log"
     shell:
         """
         awk '{{OFS=\"\\t\"}}{{print $1,$1,$2}}' {input.phenotype} > {output.pheno} 2> {log}
@@ -41,17 +42,16 @@ rule gcta:
 rule manqq_gcta:
     input: rules.gcta.output.mlma_bgz
     params:
-        prefix="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}",
-        filter="{filter}"
+        prefix="{output}/manqq/manqq.{filter}"
     resources:
         rate_limit=1
     output: 
-        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.run_conf",
-        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.qq.png",
-        "output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.lambda.txt"
+        "{output}/manqq/manqq.{filter}.run_conf",
+        "{output}/manqq/manqq.{filter}.qq.png",
+        "{output}/manqq/manqq.{filter}.lambda.txt"
     log:
-        out="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.o",
-        err="output/{cohort}/{group}/{phenotype}/manqq/manqq.{filter}.e"
+        out="{output}/manqq/manqq.{filter}.o",
+        err="{output}/manqq/manqq.{filter}.e"
     singularity: config['container']['manqq']
     shell:
         """
@@ -64,9 +64,7 @@ rule manqq_gcta:
           --build 38 \
           --image png \
           --af-col Freq \
-          --qq-title {wildcards.phenotype} \
-          --manh-title {wildcards.phenotype} \
-          --maf-filter {params.filter} \
+          --maf-filter {wildcards.filter} \
           {input} \
           {params.prefix} > {log.out} 2> {log.err}
         """
@@ -79,30 +77,27 @@ checkpoint detect_peaks:
         span=config['peakplotter']['span'],
         signif=config['p-value']
     output:
-        "output/{cohort}/{group}/{phenotype}/peaklist"
+        "{output}/peaklist"
     log:
-        "output/{cohort}/{group}/{phenotype}/peaklist.log"
+        "{output}/peaklist.log"
     singularity: config['container']['peakplotter']
     shell:
-        "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {wildcards.group} {wildcards.phenotype} {output} 2>&1 > {log}"
+        "python3 workflow/scripts/collect_peaks.py {input} {params.span} {params.signif} {output} 2>&1 > {log}"
 
 
 rule plotpeak:
     input:
         assoc=rules.gcta.output.mlma_bgz,
-        bfile=BFILE_INPUTS
+        bfile=multiext(config['bfile'], '.bed', '.bim', '.fam')
     params:
-        bfile=BFILE,
-        outdir="output/{cohort}/{group}/{phenotype}/peaks",
-        chrom="{chrom}",
-        start="{start}",
-        end="{end}",
+        bfile=config['bfile'],
+        outdir="{output}/peaks",
         vep_ld=config['peakplotter']['vep_ld']
     singularity: config['container']['peakplotter']
     resources:
         rate_limit=1
     output:
-        multiext("output/{cohort}/{group}/{phenotype}/peaks/{chrom}.{start}.{end}.500kb", '.html', '.csv')
+        multiext("{output}/peaks/{chrom}.{start}.{end}.500kb", '.html', '.csv')
     shell:
         """
         peakplotter-region  \
@@ -126,16 +121,16 @@ rule plotpeak:
 
 
 def plot_all_peaks_input(w):
-    peaklist = checkpoints.detect_peaks.get(cohort=w.cohort, group=w.group, phenotype=w.phenotype).output[0]
+    peaklist = checkpoints.detect_peaks.get(output=w.output).output[0]
     try:
         peaklist = pd.read_csv(peaklist, sep = '\t', header = None)
     except pd.errors.EmptyDataError:
         return []
-    return [rules.plotpeak.output[0].format(cohort=w.cohort, group=group, phenotype=phenotype, chrom=chrom, start=start, end=end)
-            for _, (group, phenotype, chrom, start, end) in peaklist.iterrows()]
+    return [rules.plotpeak.output[0].format(output=w.output, chrom=chrom, start=start, end=end)
+            for _, (chrom, start, end) in peaklist.iterrows()]
 
 rule plot_all_peaks:
     input:
         plot_all_peaks_input
     output:
-        touch("output/{cohort}/{group}/{phenotype}/peaks/.done")
+        touch("{output}/peaks/.done")
